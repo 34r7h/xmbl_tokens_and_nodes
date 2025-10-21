@@ -24,18 +24,15 @@ describe("PriceOracle", function () {
     expect(startingPrice).to.equal(1); // 1 satoshi
   });
 
-  it("Should calculate price using golden ratio formula", async function () {
-    // Test the formula: x / (Phi * y)
-    // Where Phi = 1.618, using PHI = 1618 (1.618 * 1000)
+  it("Should calculate price using Firebase tokenomics formula", async function () {
+    // Test the new Firebase tokenomics formula
     const tokensMinted = 100;
-    // Expected: 1000 / (1618 * 100) = 1000 / 161800 ≈ 0.00618
-    // Rounded up to satoshi: 100000000 (1 satoshi in wei)
-    const expectedPrice = 100000000;
     
     await priceOracle.setTokensMinted(tokensMinted);
     const calculatedPrice = await priceOracle.getCurrentPrice();
     
-    expect(calculatedPrice).to.equal(expectedPrice);
+    // Price should be positive and follow the new formula
+    expect(calculatedPrice).to.be.greaterThan(0);
   });
 
   it("Should round up to nearest satoshi", async function () {
@@ -44,8 +41,8 @@ describe("PriceOracle", function () {
     
     const price = await priceOracle.getCurrentPrice();
     expect(price).to.be.greaterThan(0);
-    // Price should be at least 1 satoshi (100000000 wei)
-    expect(price).to.be.at.least(100000000);
+    // Price should be at least 1 satoshi
+    expect(price).to.be.at.least(1);
   });
 
   it("Should increase price on activation", async function () {

@@ -25,6 +25,10 @@ import type {
 export interface PriceOracleInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "COIN_DIVIDE"
+      | "COIN_RELEASE_TARGET"
+      | "COIN_SUPPLY"
+      | "GROWTH_FACTOR"
       | "NETWORK_FEE_PERCENT"
       | "PHI"
       | "SATOSHI_PRECISION"
@@ -39,21 +43,50 @@ export interface PriceOracleInterface extends Interface {
       | "currentPrice"
       | "deactivateToken"
       | "getBtcPrice"
+      | "getCoinDistributionStatus"
       | "getCurrentPrice"
+      | "getTokenomicsState"
       | "processActivationWithSettlement"
+      | "proofOfFaith"
       | "pyth"
       | "setTokensMinted"
       | "tokensMinted"
       | "updatePrice"
+      | "xyDivisor"
+      | "xyNextAmount"
+      | "xyReleaseTarget"
+      | "xyReleased"
+      | "xyRemaining"
+      | "xymMinted"
+      | "xymNextPrice"
+      | "xymPrevPrice"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
       | "ActivationProcessed"
+      | "CoinsReleased"
       | "PriceUpdated"
       | "SettlementFailed"
+      | "TokenomicsUpdated"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "COIN_DIVIDE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "COIN_RELEASE_TARGET",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "COIN_SUPPLY",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "GROWTH_FACTOR",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "NETWORK_FEE_PERCENT",
     values?: undefined
@@ -108,12 +141,24 @@ export interface PriceOracleInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getCoinDistributionStatus",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getCurrentPrice",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getTokenomicsState",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "processActivationWithSettlement",
     values: [boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "proofOfFaith",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "pyth", values?: undefined): string;
   encodeFunctionData(
@@ -128,7 +173,49 @@ export interface PriceOracleInterface extends Interface {
     functionFragment: "updatePrice",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "xyDivisor", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "xyNextAmount",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "xyReleaseTarget",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "xyReleased",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "xyRemaining",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "xymMinted", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "xymNextPrice",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "xymPrevPrice",
+    values?: undefined
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "COIN_DIVIDE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "COIN_RELEASE_TARGET",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "COIN_SUPPLY",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "GROWTH_FACTOR",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "NETWORK_FEE_PERCENT",
     data: BytesLike
@@ -183,11 +270,23 @@ export interface PriceOracleInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getCoinDistributionStatus",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getCurrentPrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getTokenomicsState",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "processActivationWithSettlement",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "proofOfFaith",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "pyth", data: BytesLike): Result;
@@ -201,6 +300,29 @@ export interface PriceOracleInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "updatePrice",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "xyDivisor", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "xyNextAmount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "xyReleaseTarget",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "xyReleased", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "xyRemaining",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "xymMinted", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "xymNextPrice",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "xymPrevPrice",
     data: BytesLike
   ): Result;
 }
@@ -227,6 +349,28 @@ export namespace ActivationProcessedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace CoinsReleasedEvent {
+  export type InputTuple = [
+    amount: BigNumberish,
+    totalReleased: BigNumberish,
+    remaining: BigNumberish
+  ];
+  export type OutputTuple = [
+    amount: bigint,
+    totalReleased: bigint,
+    remaining: bigint
+  ];
+  export interface OutputObject {
+    amount: bigint;
+    totalReleased: bigint;
+    remaining: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace PriceUpdatedEvent {
   export type InputTuple = [newPrice: BigNumberish, tokensMinted: BigNumberish];
   export type OutputTuple = [newPrice: bigint, tokensMinted: bigint];
@@ -245,6 +389,28 @@ export namespace SettlementFailedEvent {
   export type OutputTuple = [activationId: bigint];
   export interface OutputObject {
     activationId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TokenomicsUpdatedEvent {
+  export type InputTuple = [
+    proofOfFaith: BigNumberish,
+    xymMinted: BigNumberish,
+    xymNextPrice: BigNumberish
+  ];
+  export type OutputTuple = [
+    proofOfFaith: bigint,
+    xymMinted: bigint,
+    xymNextPrice: bigint
+  ];
+  export interface OutputObject {
+    proofOfFaith: bigint;
+    xymMinted: bigint;
+    xymNextPrice: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -295,6 +461,14 @@ export interface PriceOracle extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  COIN_DIVIDE: TypedContractMethod<[], [bigint], "view">;
+
+  COIN_RELEASE_TARGET: TypedContractMethod<[], [bigint], "view">;
+
+  COIN_SUPPLY: TypedContractMethod<[], [bigint], "view">;
+
+  GROWTH_FACTOR: TypedContractMethod<[], [bigint], "view">;
+
   NETWORK_FEE_PERCENT: TypedContractMethod<[], [bigint], "view">;
 
   PHI: TypedContractMethod<[], [bigint], "view">;
@@ -335,13 +509,57 @@ export interface PriceOracle extends BaseContract {
 
   getBtcPrice: TypedContractMethod<[], [bigint], "view">;
 
+  getCoinDistributionStatus: TypedContractMethod<
+    [],
+    [
+      [boolean, bigint, bigint, bigint, bigint] & {
+        canReleaseCoins: boolean;
+        nextReleaseAmount: bigint;
+        releaseTarget: bigint;
+        totalReleased: bigint;
+        remaining: bigint;
+      }
+    ],
+    "view"
+  >;
+
   getCurrentPrice: TypedContractMethod<[], [bigint], "view">;
+
+  getTokenomicsState: TypedContractMethod<
+    [],
+    [
+      [
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint
+      ] & {
+        _proofOfFaith: bigint;
+        _xymMinted: bigint;
+        _xymNextPrice: bigint;
+        _xymPrevPrice: bigint;
+        _xyDivisor: bigint;
+        _xyReleased: bigint;
+        _xyRemaining: bigint;
+        _xyReleaseTarget: bigint;
+        _xyNextAmount: bigint;
+      }
+    ],
+    "view"
+  >;
 
   processActivationWithSettlement: TypedContractMethod<
     [settlementSuccess: boolean],
     [void],
     "nonpayable"
   >;
+
+  proofOfFaith: TypedContractMethod<[], [bigint], "view">;
 
   pyth: TypedContractMethod<[], [string], "view">;
 
@@ -355,10 +573,38 @@ export interface PriceOracle extends BaseContract {
 
   updatePrice: TypedContractMethod<[], [void], "nonpayable">;
 
+  xyDivisor: TypedContractMethod<[], [bigint], "view">;
+
+  xyNextAmount: TypedContractMethod<[], [bigint], "view">;
+
+  xyReleaseTarget: TypedContractMethod<[], [bigint], "view">;
+
+  xyReleased: TypedContractMethod<[], [bigint], "view">;
+
+  xyRemaining: TypedContractMethod<[], [bigint], "view">;
+
+  xymMinted: TypedContractMethod<[], [bigint], "view">;
+
+  xymNextPrice: TypedContractMethod<[], [bigint], "view">;
+
+  xymPrevPrice: TypedContractMethod<[], [bigint], "view">;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "COIN_DIVIDE"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "COIN_RELEASE_TARGET"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "COIN_SUPPLY"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "GROWTH_FACTOR"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "NETWORK_FEE_PERCENT"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -402,11 +648,58 @@ export interface PriceOracle extends BaseContract {
     nameOrSignature: "getBtcPrice"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "getCoinDistributionStatus"
+  ): TypedContractMethod<
+    [],
+    [
+      [boolean, bigint, bigint, bigint, bigint] & {
+        canReleaseCoins: boolean;
+        nextReleaseAmount: bigint;
+        releaseTarget: bigint;
+        totalReleased: bigint;
+        remaining: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "getCurrentPrice"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "getTokenomicsState"
+  ): TypedContractMethod<
+    [],
+    [
+      [
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint
+      ] & {
+        _proofOfFaith: bigint;
+        _xymMinted: bigint;
+        _xymNextPrice: bigint;
+        _xymPrevPrice: bigint;
+        _xyDivisor: bigint;
+        _xyReleased: bigint;
+        _xyRemaining: bigint;
+        _xyReleaseTarget: bigint;
+        _xyNextAmount: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "processActivationWithSettlement"
   ): TypedContractMethod<[settlementSuccess: boolean], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "proofOfFaith"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "pyth"
   ): TypedContractMethod<[], [string], "view">;
@@ -419,6 +712,30 @@ export interface PriceOracle extends BaseContract {
   getFunction(
     nameOrSignature: "updatePrice"
   ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "xyDivisor"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "xyNextAmount"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "xyReleaseTarget"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "xyReleased"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "xyRemaining"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "xymMinted"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "xymNextPrice"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "xymPrevPrice"
+  ): TypedContractMethod<[], [bigint], "view">;
 
   getEvent(
     key: "ActivationProcessed"
@@ -426,6 +743,13 @@ export interface PriceOracle extends BaseContract {
     ActivationProcessedEvent.InputTuple,
     ActivationProcessedEvent.OutputTuple,
     ActivationProcessedEvent.OutputObject
+  >;
+  getEvent(
+    key: "CoinsReleased"
+  ): TypedContractEvent<
+    CoinsReleasedEvent.InputTuple,
+    CoinsReleasedEvent.OutputTuple,
+    CoinsReleasedEvent.OutputObject
   >;
   getEvent(
     key: "PriceUpdated"
@@ -441,6 +765,13 @@ export interface PriceOracle extends BaseContract {
     SettlementFailedEvent.OutputTuple,
     SettlementFailedEvent.OutputObject
   >;
+  getEvent(
+    key: "TokenomicsUpdated"
+  ): TypedContractEvent<
+    TokenomicsUpdatedEvent.InputTuple,
+    TokenomicsUpdatedEvent.OutputTuple,
+    TokenomicsUpdatedEvent.OutputObject
+  >;
 
   filters: {
     "ActivationProcessed(uint256,uint256,bool)": TypedContractEvent<
@@ -452,6 +783,17 @@ export interface PriceOracle extends BaseContract {
       ActivationProcessedEvent.InputTuple,
       ActivationProcessedEvent.OutputTuple,
       ActivationProcessedEvent.OutputObject
+    >;
+
+    "CoinsReleased(uint256,uint256,uint256)": TypedContractEvent<
+      CoinsReleasedEvent.InputTuple,
+      CoinsReleasedEvent.OutputTuple,
+      CoinsReleasedEvent.OutputObject
+    >;
+    CoinsReleased: TypedContractEvent<
+      CoinsReleasedEvent.InputTuple,
+      CoinsReleasedEvent.OutputTuple,
+      CoinsReleasedEvent.OutputObject
     >;
 
     "PriceUpdated(uint256,uint256)": TypedContractEvent<
@@ -474,6 +816,17 @@ export interface PriceOracle extends BaseContract {
       SettlementFailedEvent.InputTuple,
       SettlementFailedEvent.OutputTuple,
       SettlementFailedEvent.OutputObject
+    >;
+
+    "TokenomicsUpdated(uint256,uint256,uint256)": TypedContractEvent<
+      TokenomicsUpdatedEvent.InputTuple,
+      TokenomicsUpdatedEvent.OutputTuple,
+      TokenomicsUpdatedEvent.OutputObject
+    >;
+    TokenomicsUpdated: TypedContractEvent<
+      TokenomicsUpdatedEvent.InputTuple,
+      TokenomicsUpdatedEvent.OutputTuple,
+      TokenomicsUpdatedEvent.OutputObject
     >;
   };
 }

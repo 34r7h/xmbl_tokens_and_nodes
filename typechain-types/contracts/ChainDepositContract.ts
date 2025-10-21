@@ -30,6 +30,8 @@ export declare namespace ChainDepositContract {
     token: AddressLike;
     amount: BigNumberish;
     btcEquivalent: BigNumberish;
+    costs: BigNumberish;
+    netBtcEquivalent: BigNumberish;
     timestamp: BigNumberish;
     processed: boolean;
   };
@@ -40,6 +42,8 @@ export declare namespace ChainDepositContract {
     token: string,
     amount: bigint,
     btcEquivalent: bigint,
+    costs: bigint,
+    netBtcEquivalent: bigint,
     timestamp: bigint,
     processed: boolean
   ] & {
@@ -48,6 +52,8 @@ export declare namespace ChainDepositContract {
     token: string;
     amount: bigint;
     btcEquivalent: bigint;
+    costs: bigint;
+    netBtcEquivalent: bigint;
     timestamp: bigint;
     processed: boolean;
   };
@@ -58,6 +64,7 @@ export interface ChainDepositContractInterface extends Interface {
     nameOrSignature:
       | "addSupportedToken"
       | "calculateBtcEquivalent"
+      | "calculateCosts"
       | "createIntent"
       | "deposit"
       | "depositManager"
@@ -74,7 +81,9 @@ export interface ChainDepositContractInterface extends Interface {
       | "supportedTokens"
       | "tokenDecimals"
       | "totalBtcEquivalent"
+      | "totalCosts"
       | "totalDeposits"
+      | "totalNetBtcEquivalent"
       | "transferOwnership"
       | "userDeposits"
   ): FunctionFragment;
@@ -82,6 +91,7 @@ export interface ChainDepositContractInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "BtcEquivalentCalculated"
+      | "CostsCalculated"
       | "DepositCreated"
       | "IntentCreated"
       | "OwnershipTransferred"
@@ -94,6 +104,10 @@ export interface ChainDepositContractInterface extends Interface {
   encodeFunctionData(
     functionFragment: "calculateBtcEquivalent",
     values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "calculateCosts",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "createIntent",
@@ -154,7 +168,15 @@ export interface ChainDepositContractInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "totalCosts",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "totalDeposits",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "totalNetBtcEquivalent",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -172,6 +194,10 @@ export interface ChainDepositContractInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "calculateBtcEquivalent",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "calculateCosts",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -223,8 +249,13 @@ export interface ChainDepositContractInterface extends Interface {
     functionFragment: "totalBtcEquivalent",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "totalCosts", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalDeposits",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "totalNetBtcEquivalent",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -259,20 +290,52 @@ export namespace BtcEquivalentCalculatedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace CostsCalculatedEvent {
+  export type InputTuple = [
+    depositId: BigNumberish,
+    oracleCosts: BigNumberish,
+    contractCosts: BigNumberish,
+    networkFees: BigNumberish,
+    totalCosts: BigNumberish
+  ];
+  export type OutputTuple = [
+    depositId: bigint,
+    oracleCosts: bigint,
+    contractCosts: bigint,
+    networkFees: bigint,
+    totalCosts: bigint
+  ];
+  export interface OutputObject {
+    depositId: bigint;
+    oracleCosts: bigint;
+    contractCosts: bigint;
+    networkFees: bigint;
+    totalCosts: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace DepositCreatedEvent {
   export type InputTuple = [
     depositId: BigNumberish,
     user: AddressLike,
     token: AddressLike,
     amount: BigNumberish,
-    btcEquivalent: BigNumberish
+    btcEquivalent: BigNumberish,
+    costs: BigNumberish,
+    netBtcEquivalent: BigNumberish
   ];
   export type OutputTuple = [
     depositId: bigint,
     user: string,
     token: string,
     amount: bigint,
-    btcEquivalent: bigint
+    btcEquivalent: bigint,
+    costs: bigint,
+    netBtcEquivalent: bigint
   ];
   export interface OutputObject {
     depositId: bigint;
@@ -280,6 +343,8 @@ export namespace DepositCreatedEvent {
     token: string;
     amount: bigint;
     btcEquivalent: bigint;
+    costs: bigint;
+    netBtcEquivalent: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -377,6 +442,12 @@ export interface ChainDepositContract extends BaseContract {
     "nonpayable"
   >;
 
+  calculateCosts: TypedContractMethod<
+    [btcAmount: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
   createIntent: TypedContractMethod<
     [depositId: BigNumberish],
     [bigint],
@@ -394,12 +465,24 @@ export interface ChainDepositContract extends BaseContract {
   deposits: TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [bigint, string, string, bigint, bigint, bigint, boolean] & {
+      [
+        bigint,
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        boolean
+      ] & {
         id: bigint;
         user: string;
         token: string;
         amount: bigint;
         btcEquivalent: bigint;
+        costs: bigint;
+        netBtcEquivalent: bigint;
         timestamp: bigint;
         processed: boolean;
       }
@@ -422,9 +505,11 @@ export interface ChainDepositContract extends BaseContract {
   getStats: TypedContractMethod<
     [],
     [
-      [bigint, bigint, bigint] & {
+      [bigint, bigint, bigint, bigint, bigint] & {
         totalDepositsCount: bigint;
         totalBtcEquivalentAmount: bigint;
+        totalCostsAmount: bigint;
+        totalNetBtcEquivalentAmount: bigint;
         nextDepositIdValue: bigint;
       }
     ],
@@ -453,7 +538,11 @@ export interface ChainDepositContract extends BaseContract {
 
   totalBtcEquivalent: TypedContractMethod<[], [bigint], "view">;
 
+  totalCosts: TypedContractMethod<[], [bigint], "view">;
+
   totalDeposits: TypedContractMethod<[], [bigint], "view">;
+
+  totalNetBtcEquivalent: TypedContractMethod<[], [bigint], "view">;
 
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
@@ -486,6 +575,9 @@ export interface ChainDepositContract extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "calculateCosts"
+  ): TypedContractMethod<[btcAmount: BigNumberish], [bigint], "view">;
+  getFunction(
     nameOrSignature: "createIntent"
   ): TypedContractMethod<[depositId: BigNumberish], [bigint], "nonpayable">;
   getFunction(
@@ -503,12 +595,24 @@ export interface ChainDepositContract extends BaseContract {
   ): TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [bigint, string, string, bigint, bigint, bigint, boolean] & {
+      [
+        bigint,
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        boolean
+      ] & {
         id: bigint;
         user: string;
         token: string;
         amount: bigint;
         btcEquivalent: bigint;
+        costs: bigint;
+        netBtcEquivalent: bigint;
         timestamp: bigint;
         processed: boolean;
       }
@@ -534,9 +638,11 @@ export interface ChainDepositContract extends BaseContract {
   ): TypedContractMethod<
     [],
     [
-      [bigint, bigint, bigint] & {
+      [bigint, bigint, bigint, bigint, bigint] & {
         totalDepositsCount: bigint;
         totalBtcEquivalentAmount: bigint;
+        totalCostsAmount: bigint;
+        totalNetBtcEquivalentAmount: bigint;
         nextDepositIdValue: bigint;
       }
     ],
@@ -570,7 +676,13 @@ export interface ChainDepositContract extends BaseContract {
     nameOrSignature: "totalBtcEquivalent"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "totalCosts"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "totalDeposits"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "totalNetBtcEquivalent"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "transferOwnership"
@@ -589,6 +701,13 @@ export interface ChainDepositContract extends BaseContract {
     BtcEquivalentCalculatedEvent.InputTuple,
     BtcEquivalentCalculatedEvent.OutputTuple,
     BtcEquivalentCalculatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "CostsCalculated"
+  ): TypedContractEvent<
+    CostsCalculatedEvent.InputTuple,
+    CostsCalculatedEvent.OutputTuple,
+    CostsCalculatedEvent.OutputObject
   >;
   getEvent(
     key: "DepositCreated"
@@ -624,7 +743,18 @@ export interface ChainDepositContract extends BaseContract {
       BtcEquivalentCalculatedEvent.OutputObject
     >;
 
-    "DepositCreated(uint256,address,address,uint256,uint256)": TypedContractEvent<
+    "CostsCalculated(uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+      CostsCalculatedEvent.InputTuple,
+      CostsCalculatedEvent.OutputTuple,
+      CostsCalculatedEvent.OutputObject
+    >;
+    CostsCalculated: TypedContractEvent<
+      CostsCalculatedEvent.InputTuple,
+      CostsCalculatedEvent.OutputTuple,
+      CostsCalculatedEvent.OutputObject
+    >;
+
+    "DepositCreated(uint256,address,address,uint256,uint256,uint256,uint256)": TypedContractEvent<
       DepositCreatedEvent.InputTuple,
       DepositCreatedEvent.OutputTuple,
       DepositCreatedEvent.OutputObject

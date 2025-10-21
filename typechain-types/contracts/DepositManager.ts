@@ -29,6 +29,8 @@ export declare namespace DepositManager {
     user: AddressLike;
     amount: BigNumberish;
     btcEquivalent: BigNumberish;
+    costs: BigNumberish;
+    netBtcEquivalent: BigNumberish;
     lockedPrice: BigNumberish;
     timestamp: BigNumberish;
     processed: boolean;
@@ -40,6 +42,8 @@ export declare namespace DepositManager {
     user: string,
     amount: bigint,
     btcEquivalent: bigint,
+    costs: bigint,
+    netBtcEquivalent: bigint,
     lockedPrice: bigint,
     timestamp: bigint,
     processed: boolean,
@@ -49,6 +53,8 @@ export declare namespace DepositManager {
     user: string;
     amount: bigint;
     btcEquivalent: bigint;
+    costs: bigint;
+    netBtcEquivalent: bigint;
     lockedPrice: bigint;
     timestamp: bigint;
     processed: boolean;
@@ -61,9 +67,11 @@ export interface DepositManagerInterface extends Interface {
     nameOrSignature:
       | "activations"
       | "btcPoolBalance"
+      | "calculateCosts"
       | "currentProcessingId"
       | "emergencyReset"
       | "getActivation"
+      | "getCostStats"
       | "getQueueStatus"
       | "getUserActivations"
       | "maxQueueSize"
@@ -77,6 +85,8 @@ export interface DepositManagerInterface extends Interface {
       | "setMaxQueueSize"
       | "setProcessingPaused"
       | "settleActivation"
+      | "totalCosts"
+      | "totalNetBtcEquivalent"
       | "transferOwnership"
       | "updateBtcPoolBalance"
       | "userActivations"
@@ -100,6 +110,10 @@ export interface DepositManagerInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "calculateCosts",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "currentProcessingId",
     values?: undefined
   ): string;
@@ -110,6 +124,10 @@ export interface DepositManagerInterface extends Interface {
   encodeFunctionData(
     functionFragment: "getActivation",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getCostStats",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getQueueStatus",
@@ -161,6 +179,14 @@ export interface DepositManagerInterface extends Interface {
     values: [BigNumberish, boolean]
   ): string;
   encodeFunctionData(
+    functionFragment: "totalCosts",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "totalNetBtcEquivalent",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
@@ -182,6 +208,10 @@ export interface DepositManagerInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "calculateCosts",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "currentProcessingId",
     data: BytesLike
   ): Result;
@@ -191,6 +221,10 @@ export interface DepositManagerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getActivation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getCostStats",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -240,6 +274,11 @@ export interface DepositManagerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "settleActivation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "totalCosts", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "totalNetBtcEquivalent",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -296,6 +335,8 @@ export namespace DepositReceivedEvent {
     user: AddressLike,
     amount: BigNumberish,
     btcEquivalent: BigNumberish,
+    costs: BigNumberish,
+    netBtcEquivalent: BigNumberish,
     lockedPrice: BigNumberish
   ];
   export type OutputTuple = [
@@ -303,6 +344,8 @@ export namespace DepositReceivedEvent {
     user: string,
     amount: bigint,
     btcEquivalent: bigint,
+    costs: bigint,
+    netBtcEquivalent: bigint,
     lockedPrice: bigint
   ];
   export interface OutputObject {
@@ -310,6 +353,8 @@ export namespace DepositReceivedEvent {
     user: string;
     amount: bigint;
     btcEquivalent: bigint;
+    costs: bigint;
+    netBtcEquivalent: bigint;
     lockedPrice: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -389,11 +434,24 @@ export interface DepositManager extends BaseContract {
   activations: TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [bigint, string, bigint, bigint, bigint, bigint, boolean, boolean] & {
+      [
+        bigint,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
+        boolean
+      ] & {
         id: bigint;
         user: string;
         amount: bigint;
         btcEquivalent: bigint;
+        costs: bigint;
+        netBtcEquivalent: bigint;
         lockedPrice: bigint;
         timestamp: bigint;
         processed: boolean;
@@ -405,6 +463,12 @@ export interface DepositManager extends BaseContract {
 
   btcPoolBalance: TypedContractMethod<[], [bigint], "view">;
 
+  calculateCosts: TypedContractMethod<
+    [btcAmount: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
   currentProcessingId: TypedContractMethod<[], [bigint], "view">;
 
   emergencyReset: TypedContractMethod<[], [void], "nonpayable">;
@@ -412,6 +476,18 @@ export interface DepositManager extends BaseContract {
   getActivation: TypedContractMethod<
     [activationId: BigNumberish],
     [DepositManager.ActivationStructOutput],
+    "view"
+  >;
+
+  getCostStats: TypedContractMethod<
+    [],
+    [
+      [bigint, bigint, bigint] & {
+        totalCostsAmount: bigint;
+        totalNetBtcEquivalentAmount: bigint;
+        btcPoolBalanceAmount: bigint;
+      }
+    ],
     "view"
   >;
 
@@ -447,7 +523,7 @@ export interface DepositManager extends BaseContract {
   processingPaused: TypedContractMethod<[], [boolean], "view">;
 
   receiveDeposit: TypedContractMethod<
-    [user: AddressLike, amount: BigNumberish, btcEquivalent: BigNumberish],
+    [user: AddressLike, amount: BigNumberish, netBtcEquivalent: BigNumberish],
     [bigint],
     "nonpayable"
   >;
@@ -471,6 +547,10 @@ export interface DepositManager extends BaseContract {
     [void],
     "nonpayable"
   >;
+
+  totalCosts: TypedContractMethod<[], [bigint], "view">;
+
+  totalNetBtcEquivalent: TypedContractMethod<[], [bigint], "view">;
 
   transferOwnership: TypedContractMethod<
     [newOwner: AddressLike],
@@ -499,11 +579,24 @@ export interface DepositManager extends BaseContract {
   ): TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [bigint, string, bigint, bigint, bigint, bigint, boolean, boolean] & {
+      [
+        bigint,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
+        boolean
+      ] & {
         id: bigint;
         user: string;
         amount: bigint;
         btcEquivalent: bigint;
+        costs: bigint;
+        netBtcEquivalent: bigint;
         lockedPrice: bigint;
         timestamp: bigint;
         processed: boolean;
@@ -516,6 +609,9 @@ export interface DepositManager extends BaseContract {
     nameOrSignature: "btcPoolBalance"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "calculateCosts"
+  ): TypedContractMethod<[btcAmount: BigNumberish], [bigint], "view">;
+  getFunction(
     nameOrSignature: "currentProcessingId"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -526,6 +622,19 @@ export interface DepositManager extends BaseContract {
   ): TypedContractMethod<
     [activationId: BigNumberish],
     [DepositManager.ActivationStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getCostStats"
+  ): TypedContractMethod<
+    [],
+    [
+      [bigint, bigint, bigint] & {
+        totalCostsAmount: bigint;
+        totalNetBtcEquivalentAmount: bigint;
+        btcPoolBalanceAmount: bigint;
+      }
+    ],
     "view"
   >;
   getFunction(
@@ -566,7 +675,7 @@ export interface DepositManager extends BaseContract {
   getFunction(
     nameOrSignature: "receiveDeposit"
   ): TypedContractMethod<
-    [user: AddressLike, amount: BigNumberish, btcEquivalent: BigNumberish],
+    [user: AddressLike, amount: BigNumberish, netBtcEquivalent: BigNumberish],
     [bigint],
     "nonpayable"
   >;
@@ -586,6 +695,12 @@ export interface DepositManager extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "totalCosts"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "totalNetBtcEquivalent"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
@@ -659,7 +774,7 @@ export interface DepositManager extends BaseContract {
       BtcPoolUpdatedEvent.OutputObject
     >;
 
-    "DepositReceived(uint256,address,uint256,uint256,uint256)": TypedContractEvent<
+    "DepositReceived(uint256,address,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
       DepositReceivedEvent.InputTuple,
       DepositReceivedEvent.OutputTuple,
       DepositReceivedEvent.OutputObject

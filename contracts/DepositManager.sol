@@ -18,6 +18,8 @@ contract DepositManager is ReentrancyGuard, Ownable {
         address user;
         uint256 amount;
         uint256 btcEquivalent;
+        uint256 costs;
+        uint256 netBtcEquivalent;
         uint256 lockedPrice;
         uint256 timestamp;
         bool processed;
@@ -30,6 +32,8 @@ contract DepositManager is ReentrancyGuard, Ownable {
     uint256 public nextActivationId = 1;
     uint256 public currentProcessingId = 0;
     uint256 public btcPoolBalance = 0;
+    uint256 public totalCosts = 0;
+    uint256 public totalNetBtcEquivalent = 0;
     
     // Sequential processing state
     bool public processingPaused = false;
@@ -40,6 +44,8 @@ contract DepositManager is ReentrancyGuard, Ownable {
         address indexed user,
         uint256 amount,
         uint256 btcEquivalent,
+        uint256 costs,
+        uint256 netBtcEquivalent,
         uint256 lockedPrice
     );
     
@@ -59,23 +65,31 @@ contract DepositManager is ReentrancyGuard, Ownable {
     /**
      * @dev Receive deposit from chain deposit contract
      * Locks current price for sequential processing
+     * Note: btcEquivalent parameter is now the net BTC after costs
      */
     function receiveDeposit(
         address user,
         uint256 amount,
-        uint256 btcEquivalent
+        uint256 netBtcEquivalent
     ) external onlyOwner nonReentrant returns (uint256) {
         require(!processingPaused, "Processing paused");
         require(nextActivationId <= maxQueueSize, "Queue full");
+        require(netBtcEquivalent > 0, "Net BTC must be positive");
         
         uint256 activationId = nextActivationId++;
         uint256 lockedPrice = priceOracle.getCurrentPrice();
+        
+        // Calculate costs (this should match the calculation in ChainDepositContract)
+        uint256 costs = calculateCosts(netBtcEquivalent);
+        uint256 btcEquivalent = netBtcEquivalent + costs;
         
         activations[activationId] = Activation({
             id: activationId,
             user: user,
             amount: amount,
             btcEquivalent: btcEquivalent,
+            costs: costs,
+            netBtcEquivalent: netBtcEquivalent,
             lockedPrice: lockedPrice,
             timestamp: block.timestamp,
             processed: false,
@@ -83,8 +97,10 @@ contract DepositManager is ReentrancyGuard, Ownable {
         });
         
         userActivations[user].push(activationId);
+        totalCosts += costs;
+        totalNetBtcEquivalent += netBtcEquivalent;
         
-        emit DepositReceived(activationId, user, amount, btcEquivalent, lockedPrice);
+        emit DepositReceived(activationId, user, amount, btcEquivalent, costs, netBtcEquivalent, lockedPrice);
         
         return activationId;
     }
@@ -111,8 +127,8 @@ contract DepositManager is ReentrancyGuard, Ownable {
         activation.processed = true;
         priceOracle.activateToken();
         
-        // Update BTC pool balance
-        btcPoolBalance += activation.btcEquivalent;
+        // Update BTC pool balance (using net BTC equivalent)
+        btcPoolBalance += activation.netBtcEquivalent;
         
         emit ActivationProcessed(activationId, priceOracle.getCurrentPrice(), false);
     }
@@ -184,6 +200,40 @@ contract DepositManager is ReentrancyGuard, Ownable {
     function updateBtcPoolBalance(uint256 newBalance) external onlyOwner {
         btcPoolBalance = newBalance;
         emit BtcPoolUpdated(newBalance);
+    }
+    
+    /**
+     * @dev Calculate costs for activation (matches ChainDepositContract)
+     */
+    function calculateCosts(uint256 btcAmount) public pure returns (uint256) {
+        // Oracle costs (Pyth price feed updates)
+        uint256 oracleCosts = 1000; // 1000 satoshis base cost
+        
+        // Contract costs (gas for contract calls)
+        uint256 contractCosts = 2000; // 2000 satoshis base cost
+        
+        // Network fees (3% of BTC amount, rounded up to nearest satoshi)
+        uint256 networkFees = (btcAmount * 3) / 100;
+        if ((btcAmount * 3) % 100 > 0) {
+            networkFees += 1; // Round up to nearest satoshi
+        }
+        
+        uint256 totalCosts = oracleCosts + contractCosts + networkFees;
+        
+        return totalCosts;
+    }
+    
+    /**
+     * @dev Get cost statistics
+     */
+    function getCostStats() external view returns (
+        uint256 totalCostsAmount,
+        uint256 totalNetBtcEquivalentAmount,
+        uint256 btcPoolBalanceAmount
+    ) {
+        totalCostsAmount = totalCosts;
+        totalNetBtcEquivalentAmount = totalNetBtcEquivalent;
+        btcPoolBalanceAmount = btcPoolBalance;
     }
     
     /**

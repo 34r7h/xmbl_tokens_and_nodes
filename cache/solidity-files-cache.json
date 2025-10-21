@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/34r7h/Developer/xmbl_tokens/contracts/ChainDepositContract.sol": {
-      "lastModificationDate": 1761077481216,
-      "contentHash": "d4da847c27ff5b40df2494b3e3dfede7",
+      "lastModificationDate": 1761080358359,
+      "contentHash": "2638568d6a5b29af1d97f99c7568acbb",
       "sourceName": "contracts/ChainDepositContract.sol",
       "solcConfig": {
         "version": "0.8.19",
@@ -43,8 +43,8 @@
       ]
     },
     "/Users/34r7h/Developer/xmbl_tokens/contracts/DepositManager.sol": {
-      "lastModificationDate": 1761077401748,
-      "contentHash": "b4d31728d20ed7db981078cbebae59dd",
+      "lastModificationDate": 1761080378684,
+      "contentHash": "a77a6c99459a3310099cf5fc35deac97",
       "sourceName": "contracts/DepositManager.sol",
       "solcConfig": {
         "version": "0.8.19",

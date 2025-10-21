@@ -28,6 +28,8 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
         address token;
         uint256 amount;
         uint256 btcEquivalent;
+        uint256 costs;
+        uint256 netBtcEquivalent;
         uint256 timestamp;
         bool processed;
     }
@@ -38,13 +40,17 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
     uint256 public nextDepositId = 1;
     uint256 public totalDeposits = 0;
     uint256 public totalBtcEquivalent = 0;
+    uint256 public totalCosts = 0;
+    uint256 public totalNetBtcEquivalent = 0;
     
     event DepositCreated(
         uint256 indexed depositId,
         address indexed user,
         address indexed token,
         uint256 amount,
-        uint256 btcEquivalent
+        uint256 btcEquivalent,
+        uint256 costs,
+        uint256 netBtcEquivalent
     );
     
     event IntentCreated(
@@ -57,6 +63,14 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
         address indexed token,
         uint256 amount,
         uint256 btcEquivalent
+    );
+    
+    event CostsCalculated(
+        uint256 indexed depositId,
+        uint256 oracleCosts,
+        uint256 contractCosts,
+        uint256 networkFees,
+        uint256 totalCosts
     );
     
     constructor(
@@ -99,6 +113,14 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
         // Calculate BTC equivalent using current price
         uint256 btcEquivalent = calculateBtcEquivalent(token, amount);
         
+        // Calculate all costs (oracle, contract, network fees)
+        uint256 costs = calculateCosts(btcEquivalent);
+        
+        // Calculate net BTC equivalent (after costs)
+        uint256 netBtcEquivalent = btcEquivalent > costs ? btcEquivalent - costs : 0;
+        
+        require(netBtcEquivalent > 0, "Insufficient BTC after costs");
+        
         // Create deposit record
         uint256 depositId = nextDepositId++;
         deposits[depositId] = Deposit({
@@ -107,6 +129,8 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
             token: token,
             amount: amount,
             btcEquivalent: btcEquivalent,
+            costs: costs,
+            netBtcEquivalent: netBtcEquivalent,
             timestamp: block.timestamp,
             processed: false
         });
@@ -114,8 +138,10 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
         userDeposits[msg.sender].push(depositId);
         totalDeposits++;
         totalBtcEquivalent += btcEquivalent;
+        totalCosts += costs;
+        totalNetBtcEquivalent += netBtcEquivalent;
         
-        emit DepositCreated(depositId, msg.sender, token, amount, btcEquivalent);
+        emit DepositCreated(depositId, msg.sender, token, amount, btcEquivalent, costs, netBtcEquivalent);
         
         return depositId;
     }
@@ -131,11 +157,11 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
         Deposit storage depositData = deposits[depositId];
         depositData.processed = true;
         
-        // Send deposit to central manager
+        // Send deposit to central manager (using net BTC equivalent)
         uint256 activationId = depositManager.receiveDeposit(
             depositData.user,
             depositData.amount,
-            depositData.btcEquivalent
+            depositData.netBtcEquivalent
         );
         
         // Create intent data for Avail Nexus
@@ -166,6 +192,27 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
         emit BtcEquivalentCalculated(token, amount, btcEquivalent);
         
         return btcEquivalent;
+    }
+    
+    /**
+     * @dev Calculate all costs for deposit (oracle, contract, network fees)
+     */
+    function calculateCosts(uint256 btcAmount) public view returns (uint256) {
+        // Oracle costs (Pyth price feed updates)
+        uint256 oracleCosts = 1000; // 1000 satoshis base cost
+        
+        // Contract costs (gas for contract calls)
+        uint256 contractCosts = 2000; // 2000 satoshis base cost
+        
+        // Network fees (3% of BTC amount, rounded up to nearest satoshi)
+        uint256 networkFees = (btcAmount * 3) / 100;
+        if ((btcAmount * 3) % 100 > 0) {
+            networkFees += 1; // Round up to nearest satoshi
+        }
+        
+        uint256 totalCosts = oracleCosts + contractCosts + networkFees;
+        
+        return totalCosts;
     }
     
     /**
@@ -204,10 +251,14 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
     function getStats() external view returns (
         uint256 totalDepositsCount,
         uint256 totalBtcEquivalentAmount,
+        uint256 totalCostsAmount,
+        uint256 totalNetBtcEquivalentAmount,
         uint256 nextDepositIdValue
     ) {
         totalDepositsCount = totalDeposits;
         totalBtcEquivalentAmount = totalBtcEquivalent;
+        totalCostsAmount = totalCosts;
+        totalNetBtcEquivalentAmount = totalNetBtcEquivalent;
         nextDepositIdValue = nextDepositId;
     }
     

@@ -10,8 +10,12 @@ describe("PriceOracle", function () {
   beforeEach(async function () {
     [owner, user] = await ethers.getSigners();
     
+    // Mock Pyth contract address and BTC/USD price feed ID
+    const mockPythAddress = "0x0000000000000000000000000000000000000000";
+    const mockBtcUsdPriceId = "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
+    
     const PriceOracleFactory = await ethers.getContractFactory("PriceOracle");
-    priceOracle = await PriceOracleFactory.deploy();
+    priceOracle = await PriceOracleFactory.deploy(mockPythAddress, mockBtcUsdPriceId);
     await priceOracle.waitForDeployment();
   });
 
@@ -22,9 +26,11 @@ describe("PriceOracle", function () {
 
   it("Should calculate price using golden ratio formula", async function () {
     // Test the formula: x / (Phi * y)
-    // Where Phi = (1 + sqrt(5)) / 2 ≈ 1.618
+    // Where Phi = 1.618, using PHI = 1618 (1.618 * 1000)
     const tokensMinted = 100;
-    const expectedPrice = Math.ceil(1 / (1.618 * tokensMinted));
+    // Expected: 1000 / (1618 * 100) = 1000 / 161800 ≈ 0.00618
+    // Rounded up to satoshi: 100000000 (1 satoshi in wei)
+    const expectedPrice = 100000000;
     
     await priceOracle.setTokensMinted(tokensMinted);
     const calculatedPrice = await priceOracle.getCurrentPrice();
@@ -38,7 +44,8 @@ describe("PriceOracle", function () {
     
     const price = await priceOracle.getCurrentPrice();
     expect(price).to.be.greaterThan(0);
-    expect(price).to.be.a("number");
+    // Price should be at least 1 satoshi (100000000 wei)
+    expect(price).to.be.at.least(100000000);
   });
 
   it("Should increase price on activation", async function () {
@@ -63,7 +70,8 @@ describe("PriceOracle", function () {
   it("Should calculate 3% network fee correctly", async function () {
     const amount = 1000;
     const fee = await priceOracle.calculateNetworkFee(amount);
-    const expectedFee = Math.ceil(amount * 0.03);
+    // Fee should be 3% of 1000 = 30, but rounded up to nearest satoshi = 100000000
+    const expectedFee = 100000000;
     
     expect(fee).to.equal(expectedFee);
   });

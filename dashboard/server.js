@@ -111,9 +111,10 @@ app.post('/api/activate', (req, res) => {
         return res.status(400).json({ error: 'Insufficient BTC after costs' });
     }
 
-    // Calculate new price using golden ratio formula
-    const tokensMinted = Math.floor(netBtc / simulationState.currentPrice);
-    const newPrice = Math.ceil(simulationState.currentPrice / (PHI * tokensMinted));
+// Calculate new price using golden ratio formula
+// Price increases as more tokens are activated (inverse of the original formula)
+const tokensMinted = Math.floor(netBtc / simulationState.currentPrice);
+const newPrice = Math.ceil(simulationState.currentPrice * (1 + (tokensMinted / (PHI * 1000))));
     const priceIncrease = newPrice - simulationState.currentPrice;
 
     // Create activation

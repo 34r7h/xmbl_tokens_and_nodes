@@ -1,0 +1,68 @@
+{
+  "pyth": {
+    "network": "testnet",
+    "hermesUrl": "https://hermes.pyth.network",
+    "priceFeeds": {
+      "BTC_USD": {
+        "id": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+        "name": "BTC/USD",
+        "description": "Bitcoin to US Dollar price feed",
+        "decimals": 8,
+        "exponent": -8,
+        "supported": true
+      },
+      "ETH_USD": {
+        "id": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+        "name": "ETH/USD", 
+        "description": "Ethereum to US Dollar price feed",
+        "decimals": 8,
+        "exponent": -8,
+        "supported": true
+      }
+    },
+    "defaultFeed": "BTC_USD",
+    "updateInterval": 30000,
+    "cacheTimeout": 60000,
+    "retryAttempts": 3,
+    "retryDelay": 1000
+  },
+  "oracle": {
+    "contractAddress": "0x0000000000000000000000000000000000000000",
+    "btcUsdPriceId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+    "updatePriceFeeds": true,
+    "settlementVerification": true
+  },
+  "networks": {
+    "sepolia": {
+      "pythAddress": "0x0000000000000000000000000000000000000000",
+      "btcUsdPriceId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+    },
+    "mumbai": {
+      "pythAddress": "0x0000000000000000000000000000000000000000", 
+      "btcUsdPriceId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+    },
+    "bscTestnet": {
+      "pythAddress": "0x0000000000000000000000000000000000000000",
+      "btcUsdPriceId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+    },
+    "arbitrumSepolia": {
+      "pythAddress": "0x0000000000000000000000000000000000000000",
+      "btcUsdPriceId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+    },
+    "optimismSepolia": {
+      "pythAddress": "0x0000000000000000000000000000000000000000",
+      "btcUsdPriceId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+    }
+  },
+  "configuration": {
+    "enablePeriodicUpdates": true,
+    "enableCache": true,
+    "enableRetry": true,
+    "logLevel": "info",
+    "monitoring": {
+      "enabled": true,
+      "interval": 30000,
+      "alerts": true
+    }
+  }
+}

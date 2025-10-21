@@ -1,0 +1,129 @@
+{
+  "contracts": {
+    "PriceOracle": {
+      "name": "PriceOracle",
+      "description": "Implements XMBL token economics with Pyth oracle integration",
+      "features": [
+        "Golden ratio price calculation",
+        "Pyth Network integration",
+        "Network fee calculation",
+        "Settlement verification"
+      ],
+      "dependencies": [
+        "@pythnetwork/pyth-sdk-solidity",
+        "@openzeppelin/contracts"
+      ],
+      "events": [
+        "PriceUpdated",
+        "TokenActivated", 
+        "TokenDeactivated",
+        "ActivationSettled"
+      ],
+      "functions": [
+        "calculatePrice",
+        "activateToken",
+        "deactivateToken",
+        "calculateNetworkFee",
+        "processActivationWithSettlement"
+      ]
+    },
+    "DepositManager": {
+      "name": "DepositManager",
+      "description": "Central contract for managing cross-chain deposits and sequential activations",
+      "features": [
+        "Cross-chain deposit management",
+        "Sequential activation queue",
+        "BTC pool integration",
+        "Settlement processing"
+      ],
+      "dependencies": [
+        "@openzeppelin/contracts",
+        "./PriceOracle.sol"
+      ],
+      "events": [
+        "DepositReceived",
+        "ActivationQueued",
+        "ActivationProcessed",
+        "ActivationSettlementFailed"
+      ],
+      "functions": [
+        "receiveDeposit",
+        "processNextActivation",
+        "getDeposit",
+        "getActivation",
+        "getActivationQueueLength"
+      ]
+    },
+    "ChainDepositContract": {
+      "name": "ChainDepositContract",
+      "description": "Deployed on individual chains to accept user deposits and create cross-chain intents",
+      "features": [
+        "Multi-chain support",
+        "ERC20 and native currency deposits",
+        "BTC equivalent calculation",
+        "Intent creation"
+      ],
+      "dependencies": [
+        "@openzeppelin/contracts",
+        "./DepositManager.sol",
+        "./PriceOracle.sol"
+      ],
+      "events": [
+        "DepositMade",
+        "IntentCreated",
+        "BtcEquivalentCalculated"
+      ],
+      "functions": [
+        "deposit",
+        "createIntent",
+        "calculateBtcEquivalent",
+        "getDeposit"
+      ]
+    }
+  },
+  "deployment": {
+    "order": [
+      "PriceOracle",
+      "DepositManager", 
+      "ChainDepositContract"
+    ],
+    "dependencies": {
+      "DepositManager": ["PriceOracle"],
+      "ChainDepositContract": ["DepositManager", "PriceOracle"]
+    }
+  },
+  "networks": {
+    "sepolia": {
+      "contracts": {
+        "PriceOracle": {
+          "address": "0x0000000000000000000000000000000000000000",
+          "deployed": false
+        },
+        "DepositManager": {
+          "address": "0x0000000000000000000000000000000000000000", 
+          "deployed": false
+        },
+        "ChainDepositContract_Ethereum": {
+          "address": "0x0000000000000000000000000000000000000000",
+          "deployed": false
+        }
+      }
+    },
+    "mumbai": {
+      "contracts": {
+        "PriceOracle": {
+          "address": "0x0000000000000000000000000000000000000000",
+          "deployed": false
+        },
+        "DepositManager": {
+          "address": "0x0000000000000000000000000000000000000000",
+          "deployed": false
+        },
+        "ChainDepositContract_Polygon": {
+          "address": "0x0000000000000000000000000000000000000000",
+          "deployed": false
+        }
+      }
+    }
+  }
+}

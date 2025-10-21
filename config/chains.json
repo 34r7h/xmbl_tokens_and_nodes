@@ -1,0 +1,83 @@
+{
+  "networks": {
+    "ethereum": {
+      "name": "Ethereum",
+      "chainId": 1,
+      "network": "sepolia",
+      "rpcUrl": "https://sepolia.infura.io/v3/YOUR_KEY",
+      "explorer": "https://sepolia.etherscan.io",
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "supported": true,
+      "testnet": true
+    },
+    "polygon": {
+      "name": "Polygon",
+      "chainId": 137,
+      "network": "mumbai",
+      "rpcUrl": "https://polygon-mumbai.infura.io/v3/YOUR_KEY",
+      "explorer": "https://mumbai.polygonscan.com",
+      "nativeCurrency": {
+        "name": "MATIC",
+        "symbol": "MATIC",
+        "decimals": 18
+      },
+      "supported": true,
+      "testnet": true
+    },
+    "bsc": {
+      "name": "Binance Smart Chain",
+      "chainId": 97,
+      "network": "bscTestnet",
+      "rpcUrl": "https://data-seed-prebsc-1-s1.binance.org:8545",
+      "explorer": "https://testnet.bscscan.com",
+      "nativeCurrency": {
+        "name": "BNB",
+        "symbol": "BNB",
+        "decimals": 18
+      },
+      "supported": true,
+      "testnet": true
+    },
+    "arbitrum": {
+      "name": "Arbitrum",
+      "chainId": 421614,
+      "network": "arbitrumSepolia",
+      "rpcUrl": "https://sepolia-rollup.arbitrum.io/rpc",
+      "explorer": "https://sepolia.arbiscan.io",
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "supported": true,
+      "testnet": true
+    },
+    "optimism": {
+      "name": "Optimism",
+      "chainId": 11155420,
+      "network": "optimismSepolia",
+      "rpcUrl": "https://sepolia.optimism.io",
+      "explorer": "https://sepolia-optimism.etherscan.io",
+      "nativeCurrency": {
+        "name": "Ether",
+        "symbol": "ETH",
+        "decimals": 18
+      },
+      "supported": true,
+      "testnet": true
+    }
+  },
+  "defaultNetwork": "ethereum",
+  "supportedChains": [1, 137, 97, 421614, 11155420],
+  "chainNames": {
+    "1": "Ethereum",
+    "137": "Polygon", 
+    "97": "BSC",
+    "421614": "Arbitrum",
+    "11155420": "Optimism"
+  }
+}

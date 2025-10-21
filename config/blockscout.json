@@ -1,0 +1,139 @@
+{
+  "blockscout": {
+    "network": "testnet",
+    "api": {
+      "baseUrl": "https://eth-sepolia.blockscout.com/api",
+      "timeout": 30000,
+      "retryAttempts": 3,
+      "retryDelay": 1000
+    },
+    "mcp": {
+      "enabled": true,
+      "serverUrl": "http://localhost:3000",
+      "apiKey": "YOUR_BLOCKSCOUT_API_KEY",
+      "timeout": 30000,
+      "retryAttempts": 3
+    },
+    "autoscout": {
+      "enabled": true,
+      "explorerUrl": "http://localhost:3001",
+      "monitoringInterval": 30000,
+      "eventIndexing": true,
+      "aiAuditing": true
+    }
+  },
+  "monitoring": {
+    "contracts": [
+      {
+        "name": "PriceOracle",
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 1,
+        "events": [
+          "PriceUpdated",
+          "TokenActivated",
+          "TokenDeactivated",
+          "ActivationSettled"
+        ],
+        "monitored": true
+      },
+      {
+        "name": "DepositManager",
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 1,
+        "events": [
+          "DepositReceived",
+          "ActivationQueued",
+          "ActivationProcessed",
+          "ActivationSettlementFailed"
+        ],
+        "monitored": true
+      }
+    ],
+    "chains": [
+      {
+        "chainId": 1,
+        "name": "Ethereum",
+        "network": "sepolia",
+        "rpcUrl": "https://sepolia.infura.io/v3/YOUR_KEY",
+        "explorer": "https://sepolia.etherscan.io",
+        "monitored": true
+      },
+      {
+        "chainId": 137,
+        "name": "Polygon",
+        "network": "mumbai",
+        "rpcUrl": "https://polygon-mumbai.infura.io/v3/YOUR_KEY",
+        "explorer": "https://mumbai.polygonscan.com",
+        "monitored": true
+      }
+    ]
+  },
+  "mcp": {
+    "tools": [
+      {
+        "name": "analyze_activation_sequence",
+        "description": "Analyze activation sequences for anomalies and security risks",
+        "parameters": {
+          "chain_id": "number",
+          "contract_address": "string",
+          "time_range": "string"
+        }
+      },
+      {
+        "name": "get_address_info",
+        "description": "Get detailed information about a blockchain address",
+        "parameters": {
+          "chain_id": "number",
+          "address": "string"
+        }
+      },
+      {
+        "name": "get_token_holdings",
+        "description": "Get token holdings for a specific address",
+        "parameters": {
+          "chain_id": "number",
+          "address": "string"
+        }
+      },
+      {
+        "name": "get_chains_list",
+        "description": "Get list of supported blockchain networks",
+        "parameters": {}
+      }
+    ],
+    "prompts": {
+      "activationAudit": "Analyze the following activation data for anomalies and security risks: {data}. Provide a summary, potential issues, and recommendations.",
+      "securityCheck": "Perform a comprehensive security audit of activation sequences for contract {contract} over the last {timeRange}. Look for anomalies, potential risks, and security issues.",
+      "patternAnalysis": "Analyze activation sequence patterns for contract {contract} over the last {timeRange}. Identify trends, anomalies, and optimization opportunities."
+    }
+  },
+  "transparency": {
+    "features": [
+      "Real-time event monitoring",
+      "Cross-chain transaction tracking",
+      "AI-powered anomaly detection",
+      "Automated security auditing",
+      "Public transparency dashboard"
+    ],
+    "dashboard": {
+      "enabled": true,
+      "url": "http://localhost:3001",
+      "features": [
+        "Live transaction monitoring",
+        "Activation sequence visualization",
+        "Price feed tracking",
+        "Security alerts",
+        "AI audit reports"
+      ]
+    }
+  },
+  "configuration": {
+    "enableMonitoring": true,
+    "enableMCP": true,
+    "enableAutoscout": true,
+    "enableAI": true,
+    "logLevel": "info",
+    "exportFormats": ["json", "csv", "table"],
+    "retentionPeriod": "30d"
+  }
+}

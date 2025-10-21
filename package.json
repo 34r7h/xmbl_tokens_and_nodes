@@ -1,0 +1,35 @@
+{
+  "name": "xmbl-tokens",
+  "version": "1.0.0",
+  "description": "XMBL E2E Cross-Chain Token Activation Platform",
+  "main": "index.js",
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts",
+    "activate": "ts-node scripts/activate.ts",
+    "monitor": "ts-node scripts/monitor.ts",
+    "fetch-prices": "ts-node scripts/fetch-prices.ts",
+    "verify-sequence": "ts-node scripts/verify-sequence.ts",
+    "export-records": "ts-node scripts/export-records.ts",
+    "setup-autoscout": "ts-node scripts/setup-autoscout.ts",
+    "test-flow": "ts-node scripts/test-flow.ts"
+  },
+  "keywords": ["blockchain", "defi", "cross-chain", "token-activation"],
+  "author": "XMBL Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "hardhat": "^2.19.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@avail-project/nexus": "^1.0.0",
+    "@pythnetwork/pyth-evm-js": "^0.4.0",
+    "ethers": "^6.8.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0"
+  }
+}

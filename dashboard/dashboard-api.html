@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XMBL Token Activation Dashboard - API Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .table-container h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status.active {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status.pending {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .status.completed {
+            background: #bee3f8;
+            color: #1a365d;
+        }
+
+        .price {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .btc-amount {
+            color: #f6ad55;
+            font-weight: bold;
+        }
+
+        .cost {
+            color: #e53e3e;
+            font-weight: bold;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .live-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #38a169;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .live-indicator.stopped {
+            background: #e53e3e;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .timestamp {
+            color: #718096;
+            font-size: 0.8rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .api-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .api-status.connected {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .api-status.disconnected {
+            background: #fed7d7;
+            color: #c53030;
+        }
+    </style>
+</head>
+<body>
+    <div class="api-status" id="apiStatus">Connecting...</div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🚀 XMBL Token Activation Dashboard</h1>
+            <p><span class="live-indicator" id="liveIndicator"></span>Live Simulation - Cross-Chain Token Activation Platform</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="startBtn" onclick="startSimulation()">▶️ Start Simulation</button>
+            <button class="btn danger" id="stopBtn" onclick="stopSimulation()" disabled>⏹️ Stop Simulation</button>
+            <button class="btn success" id="activateBtn" onclick="addRandomActivation()">➕ Add Activation</button>
+            <button class="btn" onclick="clearData()">🗑️ Clear Data</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalActivations">0</div>
+                <div class="stat-label">Total Activations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="currentPrice">1</div>
+                <div class="stat-label">Current Price (sats)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalBtc">0.00000000</div>
+                <div class="stat-label">Total BTC in System</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalCosts">0</div>
+                <div class="stat-label">Total Costs (sats)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="liquidityPool">10.00%</div>
+                <div class="stat-label">Liquidity Pool %</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="developmentPool">90.00%</div>
+                <div class="stat-label">Development Pool %</div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <h2>📊 Recent Activations</h2>
+                <div class="table-container">
+                    <table id="activationsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>BTC Amount</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activationsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💰 Cost Breakdown</h2>
+                <div class="table-container">
+                    <table id="costsTable">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount (sats)</th>
+                                <th>Percentage</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="costsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container full-width">
+            <h2>🔄 BTC Pool Allocations</h2>
+            <table id="poolsTable">
+                <thead>
+                    <tr>
+                        <th>Pool Type</th>
+                        <th>BTC Amount</th>
+                        <th>Percentage</th>
+                        <th>Allocation</th>
+                        <th>Last Update</th>
+                    </tr>
+                </thead>
+                <tbody id="poolsBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-container full-width">
+            <h2>📈 Price History</h2>
+            <table id="priceHistoryTable">
+                <thead>
+                    <tr>
+                        <th>Activation</th>
+                        <th>Previous Price</th>
+                        <th>New Price</th>
+                        <th>Increase</th>
+                        <th>Tokens Minted</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="priceHistoryBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3002/api';
+        let updateInterval = null;
+        let isConnected = false;
+
+        // Check API connection
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/state`);
+                if (response.ok) {
+                    isConnected = true;
+                    document.getElementById('apiStatus').textContent = 'Connected';
+                    document.getElementById('apiStatus').className = 'api-status connected';
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                isConnected = false;
+                document.getElementById('apiStatus').textContent = 'Disconnected';
+                document.getElementById('apiStatus').className = 'api-status disconnected';
+            }
+        }
+
+        // Start simulation
+        async function startSimulation() {
+            try {
+                const response = await fetch(`${API_BASE}/start`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                    document.getElementById('liveIndicator').className = 'live-indicator';
+                    showMessage('Simulation started!', 'success');
+                    
+                    // Start auto-updates
+                    if (updateInterval) clearInterval(updateInterval);
+                    updateInterval = setInterval(updateDashboard, 2000);
+                } else {
+                    showMessage(data.error || 'Failed to start simulation', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to connect to API', 'error');
+            }
+        }
+
+        // Stop simulation
+        async function stopSimulation() {
+            try {
+                const response = await fetch(`${API_BASE}/stop`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    document.getElementById('liveIndicator').className = 'live-indicator stopped';
+                    showMessage('Simulation stopped!', 'error');
+                    
+                    if (updateInterval) {
+                        clearInterval(updateInterval);
+                        updateInterval = null;
+                    }
+                } else {
+                    showMessage(data.error || 'Failed to stop simulation', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to connect to API', 'error');
+            }
+        }
+
+        // Add random activation
+        async function addRandomActivation() {
+            try {
+                const response = await fetch(`${API_BASE}/activate`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    updateDashboard();
+                } else {
+                    showMessage(data.error || 'Failed to add activation', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to connect to API', 'error');
+            }
+        }
+
+        // Clear all data
+        async function clearData() {
+            try {
+                const response = await fetch(`${API_BASE}/clear`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    updateDashboard();
+                } else {
+                    showMessage(data.error || 'Failed to clear data', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to connect to API', 'error');
+            }
+        }
+
+        // Update dashboard with API data
+        async function updateDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/state`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Update statistics
+                    document.getElementById('totalActivations').textContent = data.totalActivations;
+                    document.getElementById('currentPrice').textContent = data.currentPrice;
+                    document.getElementById('totalBtc').textContent = data.totalBtc.toFixed(8);
+                    document.getElementById('totalCosts').textContent = data.totalCosts.toLocaleString();
+                    document.getElementById('liquidityPool').textContent = data.liquidityPool.toFixed(2) + '%';
+                    document.getElementById('developmentPool').textContent = data.developmentPool.toFixed(2) + '%';
+
+                    // Update activations table
+                    updateActivationsTable(data.activations);
+
+                    // Update costs table
+                    updateCostsTable(data.costs);
+
+                    // Update pools table
+                    updatePoolsTable(data);
+
+                    // Update price history table
+                    updatePriceHistoryTable(data.priceHistory);
+
+                    // Update button states
+                    document.getElementById('startBtn').disabled = data.running;
+                    document.getElementById('stopBtn').disabled = !data.running;
+                    document.getElementById('liveIndicator').className = data.running ? 'live-indicator' : 'live-indicator stopped';
+                }
+            } catch (error) {
+                console.error('Failed to update dashboard:', error);
+            }
+        }
+
+        // Update activations table
+        function updateActivationsTable(activations) {
+            const tbody = document.getElementById('activationsBody');
+            tbody.innerHTML = '';
+
+            activations.forEach(activation => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${activation.id}</td>
+                    <td>${activation.user}</td>
+                    <td class="btc-amount">${activation.btcAmount.toFixed(8)} BTC</td>
+                    <td class="price">${activation.price} sats</td>
+                    <td><span class="status active">${activation.status}</span></td>
+                    <td class="timestamp">${formatTime(new Date(activation.timestamp))}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update costs table
+        function updateCostsTable(costs) {
+            const tbody = document.getElementById('costsBody');
+            tbody.innerHTML = '';
+
+            const costTypes = [
+                { type: 'Oracle Costs', amount: costs.oracle, percentage: ((costs.oracle / costs.total) * 100).toFixed(2) },
+                { type: 'Contract Costs', amount: costs.contract, percentage: ((costs.contract / costs.total) * 100).toFixed(2) },
+                { type: 'Network Fees', amount: costs.network, percentage: ((costs.network / costs.total) * 100).toFixed(2) },
+                { type: 'Total Costs', amount: costs.total, percentage: '100.00' }
+            ];
+
+            costTypes.forEach(cost => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${cost.type}</td>
+                    <td class="cost">${cost.amount.toLocaleString()} sats</td>
+                    <td>${cost.percentage}%</td>
+                    <td class="timestamp">${formatTime(new Date())}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update pools table
+        function updatePoolsTable(data) {
+            const tbody = document.getElementById('poolsBody');
+            tbody.innerHTML = '';
+
+            const liquidityBtc = (data.totalBtc * data.liquidityPool) / 100;
+            const developmentBtc = (data.totalBtc * data.developmentPool) / 100;
+
+            const pools = [
+                {
+                    type: 'Liquidity Pool',
+                    btcAmount: liquidityBtc,
+                    percentage: data.liquidityPool,
+                    allocation: `${liquidityBtc.toFixed(8)} BTC`
+                },
+                {
+                    type: 'Development Pool',
+                    btcAmount: developmentBtc,
+                    percentage: data.developmentPool,
+                    allocation: `${developmentBtc.toFixed(8)} BTC`
+                }
+            ];
+
+            pools.forEach(pool => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${pool.type}</td>
+                    <td class="btc-amount">${pool.btcAmount.toFixed(8)} BTC</td>
+                    <td>${pool.percentage.toFixed(2)}%</td>
+                    <td>${pool.allocation}</td>
+                    <td class="timestamp">${formatTime(new Date())}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update price history table
+        function updatePriceHistoryTable(priceHistory) {
+            const tbody = document.getElementById('priceHistoryBody');
+            tbody.innerHTML = '';
+
+            priceHistory.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.activation}</td>
+                    <td class="price">${entry.previousPrice} sats</td>
+                    <td class="price">${entry.newPrice} sats</td>
+                    <td class="cost">+${entry.increase} sats</td>
+                    <td>${entry.tokensMinted.toLocaleString()}</td>
+                    <td class="timestamp">${formatTime(new Date(entry.timestamp))}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const existingMessage = document.querySelector('.message');
+            if (existingMessage) existingMessage.remove();
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '60px';
+            messageDiv.style.right = '20px';
+            messageDiv.style.zIndex = '1000';
+            messageDiv.style.padding = '15px 20px';
+            messageDiv.style.borderRadius = '5px';
+            messageDiv.style.fontWeight = 'bold';
+
+            document.body.appendChild(messageDiv);
+
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+
+        // Format time
+        function formatTime(date) {
+            return date.toLocaleTimeString();
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            checkConnection();
+            updateDashboard();
+            
+            // Check connection every 5 seconds
+            setInterval(checkConnection, 5000);
+            
+            showMessage('Dashboard initialized! Click "Start Simulation" to begin.', 'success');
+        });
+    </script>
+</body>
+</html>

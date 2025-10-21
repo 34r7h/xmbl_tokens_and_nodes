@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XMBL Token Activation Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .table-container h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status.active {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status.pending {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .status.completed {
+            background: #bee3f8;
+            color: #1a365d;
+        }
+
+        .price {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        .btc-amount {
+            color: #f6ad55;
+            font-weight: bold;
+        }
+
+        .cost {
+            color: #e53e3e;
+            font-weight: bold;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+        }
+
+        .live-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #38a169;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .timestamp {
+            color: #718096;
+            font-size: 0.8rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 XMBL Token Activation Dashboard</h1>
+            <p><span class="live-indicator"></span>Live Simulation - Cross-Chain Token Activation Platform</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="startSimulation()">▶️ Start Simulation</button>
+            <button class="btn danger" onclick="stopSimulation()">⏹️ Stop Simulation</button>
+            <button class="btn success" onclick="addRandomActivation()">➕ Add Activation</button>
+            <button class="btn" onclick="clearData()">🗑️ Clear Data</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalActivations">0</div>
+                <div class="stat-label">Total Activations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="currentPrice">1</div>
+                <div class="stat-label">Current Price (sats)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalBtc">0.00000000</div>
+                <div class="stat-label">Total BTC in System</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalCosts">0</div>
+                <div class="stat-label">Total Costs (sats)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="liquidityPool">10.00%</div>
+                <div class="stat-label">Liquidity Pool %</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="developmentPool">90.00%</div>
+                <div class="stat-label">Development Pool %</div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <h2>📊 Recent Activations</h2>
+                <div class="table-container">
+                    <table id="activationsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>BTC Amount</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activationsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💰 Cost Breakdown</h2>
+                <div class="table-container">
+                    <table id="costsTable">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount (sats)</th>
+                                <th>Percentage</th>
+                                <th>Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="costsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container full-width">
+            <h2>🔄 BTC Pool Allocations</h2>
+            <table id="poolsTable">
+                <thead>
+                    <tr>
+                        <th>Pool Type</th>
+                        <th>BTC Amount</th>
+                        <th>Percentage</th>
+                        <th>Allocation</th>
+                        <th>Last Update</th>
+                    </tr>
+                </thead>
+                <tbody id="poolsBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-container full-width">
+            <h2>📈 Price History</h2>
+            <table id="priceHistoryTable">
+                <thead>
+                    <tr>
+                        <th>Activation</th>
+                        <th>Previous Price</th>
+                        <th>New Price</th>
+                        <th>Increase</th>
+                        <th>Tokens Minted</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="priceHistoryBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let simulationRunning = false;
+        let simulationInterval = null;
+        let activationId = 1;
+        let currentPrice = 1; // Starting price in satoshis
+        let totalBtcInSystem = 0;
+        let totalCosts = 0;
+        let priceHistory = [];
+        let activations = [];
+        let costs = {
+            oracle: 0,
+            contract: 0,
+            network: 0,
+            total: 0
+        };
+
+        // Constants
+        const PHI = 1.618033988749895; // Golden ratio
+        const STARTING_PRICE = 1;
+        const NETWORK_FEE_PERCENT = 3;
+        const ORACLE_COST = 1000;
+        const CONTRACT_COST = 2000;
+
+        // Initialize dashboard
+        function initDashboard() {
+            updateStats();
+            updateCostsTable();
+            updatePoolsTable();
+            updatePriceHistoryTable();
+        }
+
+        // Start simulation
+        function startSimulation() {
+            if (simulationRunning) return;
+            
+            simulationRunning = true;
+            simulationInterval = setInterval(() => {
+                if (Math.random() < 0.3) { // 30% chance of new activation
+                    addRandomActivation();
+                }
+                updateStats();
+            }, 2000); // Update every 2 seconds
+
+            showMessage('Simulation started!', 'success');
+        }
+
+        // Stop simulation
+        function stopSimulation() {
+            if (!simulationRunning) return;
+            
+            simulationRunning = false;
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+            }
+            showMessage('Simulation stopped!', 'error');
+        }
+
+        // Add random activation
+        function addRandomActivation() {
+            const users = [
+                '0x1234...5678', '0x2345...6789', '0x3456...7890',
+                '0x4567...8901', '0x5678...9012', '0x6789...0123',
+                '0x7890...1234', '0x8901...2345', '0x9012...3456'
+            ];
+
+            const user = users[Math.floor(Math.random() * users.length)];
+            const btcAmount = Math.random() * 10 + 0.1; // 0.1 to 10.1 BTC
+            const btcAmountSats = Math.floor(btcAmount * 1e8);
+
+            // Calculate costs
+            const oracleCost = ORACLE_COST;
+            const contractCost = CONTRACT_COST;
+            const networkFee = Math.ceil((btcAmountSats * NETWORK_FEE_PERCENT) / 100);
+            const totalCost = oracleCost + contractCost + networkFee;
+            const netBtc = btcAmountSats - totalCost;
+
+            if (netBtc <= 0) {
+                showMessage('Insufficient BTC after costs!', 'error');
+                return;
+            }
+
+            // Calculate new price using golden ratio formula
+            const tokensMinted = Math.floor(netBtc / currentPrice);
+            const newPrice = Math.ceil(currentPrice / (PHI * tokensMinted));
+            const priceIncrease = newPrice - currentPrice;
+
+            // Create activation
+            const activation = {
+                id: activationId++,
+                user: user,
+                btcAmount: btcAmount,
+                btcAmountSats: btcAmountSats,
+                netBtc: netBtc,
+                costs: totalCost,
+                price: currentPrice,
+                newPrice: newPrice,
+                tokensMinted: tokensMinted,
+                status: 'active',
+                timestamp: new Date()
+            };
+
+            // Update system state
+            currentPrice = newPrice;
+            totalBtcInSystem += netBtc / 1e8;
+            totalCosts += totalCost;
+            costs.oracle += oracleCost;
+            costs.contract += contractCost;
+            costs.network += networkFee;
+            costs.total += totalCost;
+
+            // Add to arrays
+            activations.unshift(activation);
+            priceHistory.unshift({
+                activation: activationId - 1,
+                previousPrice: currentPrice - priceIncrease,
+                newPrice: currentPrice,
+                increase: priceIncrease,
+                tokensMinted: tokensMinted,
+                timestamp: new Date()
+            });
+
+            // Keep only last 20 activations and price history
+            if (activations.length > 20) activations.pop();
+            if (priceHistory.length > 20) priceHistory.pop();
+
+            updateActivationsTable();
+            updatePriceHistoryTable();
+            updateStats();
+            updateCostsTable();
+            updatePoolsTable();
+
+            showMessage(`Activation ${activation.id} added: ${btcAmount.toFixed(8)} BTC`, 'success');
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalActivations').textContent = activations.length;
+            document.getElementById('currentPrice').textContent = currentPrice;
+            document.getElementById('totalBtc').textContent = totalBtcInSystem.toFixed(8);
+            document.getElementById('totalCosts').textContent = totalCosts.toLocaleString();
+
+            // Calculate pool percentages using logarithmic curve
+            const liquidityPercentage = calculateLiquidityPercentage(totalBtcInSystem);
+            const developmentPercentage = 100 - liquidityPercentage;
+
+            document.getElementById('liquidityPool').textContent = liquidityPercentage.toFixed(2) + '%';
+            document.getElementById('developmentPool').textContent = developmentPercentage.toFixed(2) + '%';
+        }
+
+        // Calculate liquidity percentage using logarithmic curve
+        function calculateLiquidityPercentage(btcAmount) {
+            const minLiquidity = 10;
+            const maxLiquidity = 95;
+            const targetBTC = 100;
+
+            if (btcAmount >= targetBTC) return maxLiquidity;
+
+            const k = -Math.log(0.1) / targetBTC;
+            const curveValue = 1 - Math.exp(-k * btcAmount);
+            const percentage = minLiquidity + (maxLiquidity - minLiquidity) * curveValue;
+
+            return Math.min(Math.max(percentage, minLiquidity), maxLiquidity);
+        }
+
+        // Update activations table
+        function updateActivationsTable() {
+            const tbody = document.getElementById('activationsBody');
+            tbody.innerHTML = '';
+
+            activations.slice(0, 10).forEach(activation => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${activation.id}</td>
+                    <td>${activation.user}</td>
+                    <td class="btc-amount">${activation.btcAmount.toFixed(8)} BTC</td>
+                    <td class="price">${activation.price} sats</td>
+                    <td><span class="status active">${activation.status}</span></td>
+                    <td class="timestamp">${formatTime(activation.timestamp)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update costs table
+        function updateCostsTable() {
+            const tbody = document.getElementById('costsBody');
+            tbody.innerHTML = '';
+
+            const costTypes = [
+                { type: 'Oracle Costs', amount: costs.oracle, percentage: ((costs.oracle / costs.total) * 100).toFixed(2) },
+                { type: 'Contract Costs', amount: costs.contract, percentage: ((costs.contract / costs.total) * 100).toFixed(2) },
+                { type: 'Network Fees', amount: costs.network, percentage: ((costs.network / costs.total) * 100).toFixed(2) },
+                { type: 'Total Costs', amount: costs.total, percentage: '100.00' }
+            ];
+
+            costTypes.forEach(cost => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${cost.type}</td>
+                    <td class="cost">${cost.amount.toLocaleString()} sats</td>
+                    <td>${cost.percentage}%</td>
+                    <td class="timestamp">${formatTime(new Date())}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update pools table
+        function updatePoolsTable() {
+            const tbody = document.getElementById('poolsBody');
+            tbody.innerHTML = '';
+
+            const liquidityPercentage = calculateLiquidityPercentage(totalBtcInSystem);
+            const developmentPercentage = 100 - liquidityPercentage;
+
+            const liquidityBtc = (totalBtcInSystem * liquidityPercentage) / 100;
+            const developmentBtc = (totalBtcInSystem * developmentPercentage) / 100;
+
+            const pools = [
+                {
+                    type: 'Liquidity Pool',
+                    btcAmount: liquidityBtc,
+                    percentage: liquidityPercentage,
+                    allocation: `${liquidityBtc.toFixed(8)} BTC`
+                },
+                {
+                    type: 'Development Pool',
+                    btcAmount: developmentBtc,
+                    percentage: developmentPercentage,
+                    allocation: `${developmentBtc.toFixed(8)} BTC`
+                }
+            ];
+
+            pools.forEach(pool => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${pool.type}</td>
+                    <td class="btc-amount">${pool.btcAmount.toFixed(8)} BTC</td>
+                    <td>${pool.percentage.toFixed(2)}%</td>
+                    <td>${pool.allocation}</td>
+                    <td class="timestamp">${formatTime(new Date())}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update price history table
+        function updatePriceHistoryTable() {
+            const tbody = document.getElementById('priceHistoryBody');
+            tbody.innerHTML = '';
+
+            priceHistory.slice(0, 10).forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.activation}</td>
+                    <td class="price">${entry.previousPrice} sats</td>
+                    <td class="price">${entry.newPrice} sats</td>
+                    <td class="cost">+${entry.increase} sats</td>
+                    <td>${entry.tokensMinted.toLocaleString()}</td>
+                    <td class="timestamp">${formatTime(entry.timestamp)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Clear all data
+        function clearData() {
+            activations = [];
+            priceHistory = [];
+            activationId = 1;
+            currentPrice = 1;
+            totalBtcInSystem = 0;
+            totalCosts = 0;
+            costs = { oracle: 0, contract: 0, network: 0, total: 0 };
+
+            updateActivationsTable();
+            updatePriceHistoryTable();
+            updateStats();
+            updateCostsTable();
+            updatePoolsTable();
+
+            showMessage('All data cleared!', 'success');
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const existingMessage = document.querySelector('.message');
+            if (existingMessage) existingMessage.remove();
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.right = '20px';
+            messageDiv.style.zIndex = '1000';
+            messageDiv.style.padding = '15px 20px';
+            messageDiv.style.borderRadius = '5px';
+            messageDiv.style.fontWeight = 'bold';
+
+            document.body.appendChild(messageDiv);
+
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+
+        // Format time
+        function formatTime(date) {
+            return date.toLocaleTimeString();
+        }
+
+        // Initialize dashboard on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initDashboard();
+            showMessage('Dashboard initialized! Click "Start Simulation" to begin.', 'success');
+        });
+    </script>
+</body>
+</html>

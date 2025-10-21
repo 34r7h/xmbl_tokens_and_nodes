@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { ethers } from 'hardhat';
+import { ethers } from 'ethers';
 import { config } from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -92,7 +92,9 @@ async function testFullFlow(config: TestFlowConfig, signer: any, numUsers: numbe
     const nexusService = new NexusIntentService(
       signer.provider,
       config.contracts.DepositManager.address,
-      new Map([[1, config.contracts.ChainDepositContract_Ethereum?.address || '0x0000000000000000000000000000000000000000']])
+      new Map([[1, config.contracts.ChainDepositContract_Ethereum?.address || '0x0000000000000000000000000000000000000000']]),
+      'test-api-key',
+      'http://localhost:3000'
     );
 
     const pythOracle = new PythOracleService(
@@ -103,10 +105,10 @@ async function testFullFlow(config: TestFlowConfig, signer: any, numUsers: numbe
     );
 
     const blockscoutMonitor = new BlockscoutMonitorService(signer.provider);
-    const mcpService = new BlockscoutMCPService({
-      apiKey: process.env.BLOCKSCOUT_API_KEY || 'test-api-key',
-      mcpServerUrl: process.env.BLOCKSCOUT_MCP_SERVER_URL || 'http://localhost:3000'
-    });
+    const mcpService = new BlockscoutMCPService(
+      process.env.BLOCKSCOUT_API_KEY || 'test-api-key',
+      process.env.BLOCKSCOUT_MCP_SERVER_URL || 'http://localhost:3000'
+    );
     const mcpApp = new MCPApplication(mcpService);
 
     console.log('✅ Services initialized');
@@ -171,7 +173,7 @@ async function testFullFlow(config: TestFlowConfig, signer: any, numUsers: numbe
 
     // Step 7: Export data
     console.log('\n📄 Step 7: Exporting test data...');
-    const events = blockscoutMonitor.exportEvents(1, config.contracts.DepositManager.address);
+    const events = blockscoutMonitor.exportAllEvents(1, config.contracts.DepositManager.address);
     console.log(`Exported ${events.length} events`);
 
     console.log('\n✅ Full end-to-end test completed successfully!');
@@ -193,7 +195,9 @@ async function testIntentFlow(config: TestFlowConfig, signer: any, numUsers: num
     const nexusService = new NexusIntentService(
       signer.provider,
       config.contracts.DepositManager.address,
-      new Map([[1, config.contracts.ChainDepositContract_Ethereum?.address || '0x0000000000000000000000000000000000000000']])
+      new Map([[1, config.contracts.ChainDepositContract_Ethereum?.address || '0x0000000000000000000000000000000000000000']]),
+      'test-api-key',
+      'http://localhost:3000'
     );
 
     await nexusService.initializeNexus();
@@ -265,7 +269,7 @@ async function testMonitorFlow(config: TestFlowConfig, signer: any) {
     console.log(`Events indexed: ${events1 + events2}`);
 
     console.log('Exporting events...');
-    const exportedEvents = blockscoutMonitor.exportEvents(1, config.contracts.DepositManager.address);
+    const exportedEvents = blockscoutMonitor.exportAllEvents(1, config.contracts.DepositManager.address);
     console.log(`Events exported: ${exportedEvents.length}`);
 
     console.log('✅ Monitor flow test completed');
@@ -279,10 +283,10 @@ async function testAIFlow(config: TestFlowConfig, signer: any) {
   console.log('\n=== TESTING AI FLOW ===');
   
   try {
-    const mcpService = new BlockscoutMCPService({
-      apiKey: process.env.BLOCKSCOUT_API_KEY || 'test-api-key',
-      mcpServerUrl: process.env.BLOCKSCOUT_MCP_SERVER_URL || 'http://localhost:3000'
-    });
+    const mcpService = new BlockscoutMCPService(
+      process.env.BLOCKSCOUT_API_KEY || 'test-api-key',
+      process.env.BLOCKSCOUT_MCP_SERVER_URL || 'http://localhost:3000'
+    );
     const mcpApp = new MCPApplication(mcpService);
 
     console.log('Testing MCP connection...');

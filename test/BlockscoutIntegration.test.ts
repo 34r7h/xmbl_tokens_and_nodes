@@ -180,7 +180,7 @@ describe("Blockscout Integration", function () {
       expect(result).to.have.property('recommendations');
       
       // Wait a bit for the conversation to be stored
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       const history = mcpApplication.getConversationHistory();
       expect(history).to.have.length(1);

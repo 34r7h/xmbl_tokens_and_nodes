@@ -33,7 +33,7 @@ Multi-chain token activation system with:
 
 - Integrates Pyth pull oracle (updatePriceFeeds) for BTC/USD conversion
 - Implements XMBL token economics pricing function
-- Price calculation: `x / (Phi * y)` where x=Token Price, y=Tokens Minted, Phi=Golden Ratio (1.618...)
+- Price calculation: `cost = x + (x * Math.sqrt(5)) / (2 * y))` where x=Token Price, y=Tokens Minted, Phi=Golden Ratio (1.618...)
 - Starting value: 1 satoshi (0.00000001 BTC)
 - Price increases on activation, decreases on deactivation
 - **All prices round UP to nearest satoshi**

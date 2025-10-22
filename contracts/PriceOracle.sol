@@ -22,7 +22,7 @@ contract PriceOracle {
     uint256 public constant COIN_SUPPLY = 999999999; // Total coin supply
     uint256 public constant COIN_DIVIDE = 9; // Initial divisor for coin distribution
     uint256 public constant COIN_RELEASE_TARGET = 369; // Initial release target (0.00369 BTC in satoshis)
-    uint256 public constant GROWTH_FACTOR = 1618; // Golden ratio for growth
+    uint256 public constant GROWTH_FACTOR = 1; // Minimal growth factor
     
     IPyth public immutable pyth;
     bytes32 public immutable btcUsdPriceId;
@@ -100,12 +100,17 @@ contract PriceOracle {
         // Store previous price
         xymPrevPrice = xymNextPrice;
         
-        // Calculate new price using Firebase formula
+        // Calculate new price using corrected algorithm: cost + Math.ceil((cost * sqrt(5)) / (2 * x))
         uint256 cost = xymNextPrice;
-        uint256 growthMultiplier = (GROWTH_FACTOR * xymMinted) / 1000;
+        uint256 sqrt5 = 2236; // sqrt(5) * 1000 for precision
+        uint256 denominator = 2 * xymMinted;
         
-        if (growthMultiplier > 0) {
-            uint256 priceIncrease = cost / growthMultiplier;
+        if (denominator > 0) {
+            uint256 priceIncrease = (cost * sqrt5) / denominator;
+            // Math.ceil equivalent - add 1 if there's any remainder
+            if ((cost * sqrt5) % denominator > 0) {
+                priceIncrease += 1;
+            }
             xymNextPrice = cost + priceIncrease;
         }
         
@@ -124,11 +129,15 @@ contract PriceOracle {
             // Update remaining coins
             xyRemaining = COIN_SUPPLY - xyReleased;
             
-            // Update next coin release amount
-            xyNextAmount = xyRemaining / xyDivisor;
+            // Update next coin release amount (prevent division by zero)
+            if (xyDivisor > 0) {
+                xyNextAmount = xyRemaining / xyDivisor;
+            } else {
+                xyNextAmount = xyRemaining; // Release all remaining coins
+            }
             
-            // Update coin release target
-            xyReleaseTarget = (xyReleaseTarget * GROWTH_FACTOR) / 1000;
+            // Update coin release target using golden ratio
+            xyReleaseTarget = (xyReleaseTarget * 1618) / 1000;
             
             emit CoinsReleased(amount, xyReleased, xyRemaining);
         }

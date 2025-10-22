@@ -24,9 +24,11 @@ export interface CoinDistributionStatus {
 export class TokenomicsService {
   private priceOracle: PriceOracle;
   private provider: ethers.Provider;
+  private signer?: ethers.Signer;
 
-  constructor(priceOracleAddress: string, provider: ethers.Provider) {
+  constructor(priceOracleAddress: string, provider: ethers.Provider, signer?: ethers.Signer) {
     this.provider = provider;
+    this.signer = signer;
     this.priceOracle = new ethers.Contract(
       priceOracleAddress,
       [
@@ -40,7 +42,7 @@ export class TokenomicsService {
         'event CoinsReleased(uint256,uint256,uint256)',
         'event ActivationProcessed(uint256,uint256,bool)'
       ],
-      provider
+      signer || provider
     ) as unknown as PriceOracle;
   }
 

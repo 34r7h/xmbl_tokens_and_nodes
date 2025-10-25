@@ -4,3 +4,4 @@
 export { ChainDepositContract__factory } from "./ChainDepositContract__factory";
 export { DepositManager__factory } from "./DepositManager__factory";
 export { PriceOracle__factory } from "./PriceOracle__factory";
+export { XMBLToken__factory } from "./XMBLToken__factory";

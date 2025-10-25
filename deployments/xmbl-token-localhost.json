@@ -1,0 +1,9 @@
+{
+  "address": "0x7Cf4be31f546c04787886358b9486ca3d62B9acf",
+  "name": "XMBL Token",
+  "symbol": "XMBL",
+  "decimals": "18",
+  "totalSupply": "1000000000000000000000000",
+  "network": "localhost",
+  "deployedAt": "2025-10-25T13:24:11.444Z"
+}

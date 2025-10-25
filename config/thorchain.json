@@ -1,0 +1,59 @@
+{
+  "testnet": {
+    "network": "testnet",
+    "midgardUrl": "https://testnet.midgard.thorchain.info/v2",
+    "thornodeUrl": "https://testnet.thornode.thorchain.info",
+    "bitcoinRpcUrl": "https://testnet.bitcoin.com",
+    "ethereumRpcUrl": "https://sepolia.infura.io/v3/YOUR_INFURA_KEY",
+    "privateKey": "YOUR_PRIVATE_KEY_FOR_THORCHAIN_OPERATIONS"
+  },
+  "mainnet": {
+    "network": "mainnet",
+    "midgardUrl": "https://midgard.thorchain.info/v2",
+    "thornodeUrl": "https://thornode.thorchain.info",
+    "bitcoinRpcUrl": "https://bitcoin.com",
+    "ethereumRpcUrl": "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
+    "privateKey": "YOUR_PRIVATE_KEY_FOR_THORCHAIN_OPERATIONS"
+  },
+  "pools": {
+    "development": {
+      "address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+      "description": "Development pool for XMBL project funding"
+    },
+    "liquidity": {
+      "address": "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+      "description": "Liquidity pool for XMBL token backing"
+    }
+  },
+  "supportedAssets": [
+    {
+      "chain": "ETH",
+      "symbol": "ETH",
+      "ticker": "ETH",
+      "synth": false
+    },
+    {
+      "chain": "ETH", 
+      "symbol": "USDC",
+      "ticker": "USDC",
+      "synth": false
+    },
+    {
+      "chain": "ETH",
+      "symbol": "USDT", 
+      "ticker": "USDT",
+      "synth": false
+    }
+  ],
+  "fees": {
+    "inboundFee": "0.1%",
+    "outboundFee": "0.1%",
+    "networkFee": "0.1%",
+    "totalFee": "0.3%"
+  },
+  "limits": {
+    "minSwapAmount": "0.001",
+    "maxSwapAmount": "100",
+    "dailyLimit": "1000"
+  }
+}

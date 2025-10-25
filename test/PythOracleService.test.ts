@@ -22,7 +22,7 @@ describe("PythOracleService", function () {
     );
   });
 
-  it("Should initialize successfully", async function () {
+  it("Should initialize successfully with Pyth SDK", async function () {
     const status = pythService.getServiceStatus();
     expect(status.hermesUrl).to.equal("https://hermes.pyth.network");
     expect(status.btcUsdFeedId).to.equal("0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43");

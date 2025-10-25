@@ -150,7 +150,7 @@ contract ChainDepositContract is ReentrancyGuard, Ownable {
      * @dev Create cross-chain intent for deposit
      * Implements "Bridge & Execute" pattern
      */
-    function createIntent(uint256 depositId) external onlyOwner returns (uint256) {
+    function createIntent(uint256 depositId) external returns (uint256) {
         require(depositId < nextDepositId, "Invalid deposit ID");
         require(!deposits[depositId].processed, "Already processed");
         

@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { DepositManager__factory } from '../typechain-types';
+import { ThorchainIntegration } from './ThorchainIntegration';
 
 interface ConversionConfig {
   developmentPoolAddress: string;
@@ -7,6 +8,15 @@ interface ConversionConfig {
   minLiquidityPercentage: number; // 10% starting
   maxLiquidityPercentage: number; // 95% upper bound
   targetBTCForMaxLiquidity: number; // 100 BTC in satoshis
+  thorchainConfig: {
+    midgardUrl: string;
+    thornodeUrl: string;
+    network: 'testnet' | 'mainnet';
+    btcTestnetLiquidityAddress?: string;
+    btcTestnetLiquidityKey?: string;
+    btcTestnetDeveloperAddress?: string;
+    btcTestnetDeveloperKey?: string;
+  };
 }
 
 /**
@@ -18,6 +28,7 @@ export class BTCConversionService {
   private provider: ethers.Provider;
   private depositManager: any;
   private config: ConversionConfig;
+  private thorchainIntegration: ThorchainIntegration;
 
   constructor(
     provider: ethers.Provider,
@@ -30,6 +41,15 @@ export class BTCConversionService {
       provider
     );
     this.config = config;
+    this.thorchainIntegration = new ThorchainIntegration({
+      midgardUrl: 'https://testnet.multichain.midgard.thorchain.info/v2',
+      thornodeUrl: 'https://testnet.thornode.thorchain.info',
+      network: 'testnet',
+      btcTestnetLiquidityAddress: process.env.BTC_TESTNET_LIQUIDITY_ADDRESS,
+      btcTestnetLiquidityKey: process.env.BTC_TESTNET_LIQUIDITY_KEY,
+      btcTestnetDeveloperAddress: process.env.BTC_TESTNET_DEVELOPER_ADDRESS,
+      btcTestnetDeveloperKey: process.env.BTC_TESTNET_DEVELOPER_KEY
+    });
   }
 
   /**
@@ -44,6 +64,9 @@ export class BTCConversionService {
     // Convert satoshis to BTC for calculation
     const btcAmount = btcAmountSats / 1e8;
     
+    // Prevent negative or zero amounts
+    if (btcAmount <= 0) return minLiquidityPercentage;
+    
     // Calculate k so that at targetBTC we reach 90% of the range
     // We want: min + (max - min) * 0.9 = min + (max - min) * (1 - e^(-k * targetBTC))
     // So: 0.9 = 1 - e^(-k * targetBTC)
@@ -52,8 +75,8 @@ export class BTCConversionService {
     // So: k = -ln(0.1) / targetBTC
     const k = -Math.log(0.1) / targetBTCForMaxLiquidity;
     
-    // Apply logarithmic curve
-    const curveValue = 1 - Math.exp(-k * btcAmount);
+    // Apply logarithmic curve with bounds checking
+    const curveValue = Math.max(0, Math.min(1, 1 - Math.exp(-k * btcAmount)));
     const liquidityPercentage = minLiquidityPercentage + (maxLiquidityPercentage - minLiquidityPercentage) * curveValue;
     
     // Ensure we stay within bounds
@@ -113,12 +136,14 @@ export class BTCConversionService {
   }
 
   /**
-   * @dev Process BTC conversion with cost accounting and pool splitting
+   * @dev Process BTC conversion with real THORChain integration
    */
   async processBTCConversion(
     userAddress: string,
     btcAmountSats: number,
-    activationId: number
+    activationId: number,
+    fromAsset: 'ETH' | 'USDC' | 'USDT',
+    fromAmount: string
   ): Promise<{
     success: boolean;
     developmentSats: number;
@@ -126,13 +151,110 @@ export class BTCConversionService {
     costs: any;
     netBTCForActivation: number;
     transactionHash?: string;
+    thorchainTxHash?: string;
   }> {
     try {
-      // Calculate all costs
+      console.log(`🔄 Processing REAL BTC conversion for activation ${activationId}:`);
+      console.log(`  From: ${fromAmount} ${fromAsset}`);
+      console.log(`  Target BTC: ${btcAmountSats} sats`);
+      
+      // Calculate split between liquidity and developer pools
+      const liquidityPercentage = this.calculateLiquidityPercentage(btcAmount);
+      const developerPercentage = 100 - liquidityPercentage;
+      
+      const liquidityAmount = (btcAmount * liquidityPercentage) / 100;
+      const developerAmount = (btcAmount * developerPercentage) / 100;
+      
+      console.log(`💰 BTC Split Calculation:`);
+      console.log(`  Total BTC: ${ethers.formatUnits(btcAmount, 8)} BTC`);
+      console.log(`  Liquidity Pool: ${liquidityPercentage}% = ${ethers.formatUnits(liquidityAmount, 8)} BTC`);
+      console.log(`  Developer Pool: ${developerPercentage}% = ${ethers.formatUnits(developerAmount, 8)} BTC`);
+      
+      // Execute THORChain swaps to both pools
+      let liquiditySwapResult;
+      let developerSwapResult;
+      
+      switch (fromAsset) {
+        case 'ETH':
+          // Liquidity pool swap
+          liquiditySwapResult = await this.thorchainIntegration.executeSwap(
+            'ETH.ETH',
+            'BTC.BTC',
+            (fromAmount * liquidityPercentage / 100).toString(),
+            this.config.thorchainConfig.btcTestnetLiquidityAddress || this.config.liquidityPoolAddress
+          );
+          
+          // Developer pool swap
+          developerSwapResult = await this.thorchainIntegration.executeSwap(
+            'ETH.ETH',
+            'BTC.BTC',
+            (fromAmount * developerPercentage / 100).toString(),
+            this.config.thorchainConfig.btcTestnetDeveloperAddress || this.config.developmentPoolAddress
+          );
+          break;
+        case 'USDC':
+          liquiditySwapResult = await this.thorchainIntegration.executeSwap(
+            'ETH.USDC-0XA0B86A33E6C0C0C0C0C0C0C0C0C0C0C0C0C0C0C0',
+            'BTC.BTC',
+            (fromAmount * liquidityPercentage / 100).toString(),
+            this.config.thorchainConfig.btcTestnetLiquidityAddress || this.config.liquidityPoolAddress
+          );
+          
+          developerSwapResult = await this.thorchainIntegration.executeSwap(
+            'ETH.USDC-0XA0B86A33E6C0C0C0C0C0C0C0C0C0C0C0C0C0C0C0',
+            'BTC.BTC',
+            (fromAmount * developerPercentage / 100).toString(),
+            this.config.thorchainConfig.btcTestnetDeveloperAddress || this.config.developmentPoolAddress
+          );
+          break;
+        case 'USDT':
+          liquiditySwapResult = await this.thorchainIntegration.executeSwap(
+            'ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7',
+            'BTC.BTC',
+            (fromAmount * liquidityPercentage / 100).toString(),
+            this.config.thorchainConfig.btcTestnetLiquidityAddress || this.config.liquidityPoolAddress
+          );
+          
+          developerSwapResult = await this.thorchainIntegration.executeSwap(
+            'ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7',
+            'BTC.BTC',
+            (fromAmount * developerPercentage / 100).toString(),
+            this.config.thorchainConfig.btcTestnetDeveloperAddress || this.config.developmentPoolAddress
+          );
+          break;
+        default:
+          throw new Error(`Unsupported asset: ${fromAsset}`);
+      }
+      
+      // Combine results
+      const swapResult = {
+        success: liquiditySwapResult.success && developerSwapResult.success,
+        liquidityTxHash: liquiditySwapResult.txHash,
+        developerTxHash: developerSwapResult.txHash,
+        liquidityOutput: liquiditySwapResult.estimatedOutput,
+        developerOutput: developerSwapResult.estimatedOutput,
+        totalOutput: (parseFloat(liquiditySwapResult.estimatedOutput || '0') + parseFloat(developerSwapResult.estimatedOutput || '0')).toString(),
+        fees: {
+          liquidity: liquiditySwapResult.fees,
+          developer: developerSwapResult.fees
+        }
+      };
+      
+      if (!swapResult.success) {
+        throw new Error(`THORChain swap failed: ${swapResult.error}`);
+      }
+      
+      console.log(`✅ THORChain swap successful! TX: ${swapResult.txHash}`);
+      console.log(`💰 Expected BTC output: ${swapResult.estimatedOutput}`);
+      console.log(`💸 Swap fees: ${swapResult.fees?.total}`);
+      
+      // Calculate all costs including THORChain fees
       const costs = this.calculateTotalCosts(btcAmountSats);
+      const thorchainFees = swapResult.fees?.total || '0';
+      const totalCosts = costs.totalCosts + parseInt(thorchainFees);
       
       // Only net BTC counts toward token activation
-      const netBTCForActivation = costs.netBTCForActivation;
+      const netBTCForActivation = Math.max(0, btcAmountSats - totalCosts);
       
       if (netBTCForActivation <= 0) {
         throw new Error("Insufficient BTC after costs for activation");
@@ -141,29 +263,34 @@ export class BTCConversionService {
       // Split the net BTC between pools
       const { developmentSats, liquiditySats } = this.splitBTCAmount(netBTCForActivation);
       
-      // Mock conversion process (in production, this would involve actual BTC transfers)
-      console.log(`Processing BTC conversion for activation ${activationId}:`);
-      console.log(`  Total BTC: ${btcAmountSats} sats`);
-      console.log(`  Costs: ${costs.totalCosts} sats`);
+      console.log(`📊 Final allocation:`);
+      console.log(`  Total BTC received: ${btcAmountSats} sats`);
+      console.log(`  Total costs: ${totalCosts} sats`);
       console.log(`  Net BTC for activation: ${netBTCForActivation} sats`);
       console.log(`  Development pool: ${developmentSats} sats (${this.calculateDevelopmentPercentage(netBTCForActivation).toFixed(2)}%)`);
       console.log(`  Liquidity pool: ${liquiditySats} sats (${this.calculateLiquidityPercentage(netBTCForActivation).toFixed(2)}%)`);
       
-      // In production, this would:
+      // TODO: In production, this would:
       // 1. Transfer developmentSats to development pool
-      // 2. Transfer liquiditySats to liquidity pool
+      // 2. Transfer liquiditySats to liquidity pool  
       // 3. Update activation record with net BTC amount
+      // 4. Monitor THORChain transaction for completion
       
       return {
         success: true,
         developmentSats,
         liquiditySats,
-        costs,
-        netBTCForActivation
+        costs: {
+          ...costs,
+          thorchainFees: thorchainFees,
+          totalCosts: totalCosts
+        },
+        netBTCForActivation,
+        thorchainTxHash: swapResult.txHash
       };
       
     } catch (error) {
-      console.error("BTC conversion failed:", error);
+      console.error("❌ BTC conversion failed:", error);
       return {
         success: false,
         developmentSats: 0,

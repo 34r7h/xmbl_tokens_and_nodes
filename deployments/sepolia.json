@@ -2,17 +2,40 @@
   "network": "sepolia",
   "contracts": {
     "PriceOracle": {
-      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "transactionHash": "0x7a3005db002799b22ab9adec3a921502713517478a29eecf18ef775f7df738d0"
+      "address": "0x19d9ebAe7d0883f15f64D0519D35526FFDff0891",
+      "transactionHash": "0x00bd44a205c5eb149a87ea4725a4cbe41dc515f46ba953e5f2516e35dde9c47d",
+      "blockNumber": 9487599
     },
     "DepositManager": {
-      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "transactionHash": "0xdde58780efc4b2930573acd35321e243ea7134e962b4a426b47c820ebefae44d"
+      "address": "0x230b0488c505cfadF97495c4Fd2243B8b531C83F",
+      "transactionHash": "0xb99c4d891b4e34e0ab10de5f72ae5a8d4476ae3d8b4b6eac22fa3d64fdffade8",
+      "blockNumber": 9487600
     },
-    "ChainDepositContract": {
-      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "transactionHash": "0x78a8799da28f94eca2e24142caa49a346764356b047154694929ddc9446f150c"
+    "ChainDepositContract_Ethereum": {
+      "address": "0x8c55AfF0d51444aFa640F57d22E8d634d32aE24d",
+      "transactionHash": "0x8317dd6ead14c2007b7b7a9a0f43ed816692ef9523209c161e3eb21637719226",
+      "blockNumber": 9487601
+    },
+    "ChainDepositContract_Polygon": {
+      "address": "0x974c32ECB7a26f3F3C08E439A8EE6aB0625964D7",
+      "transactionHash": "0x327456306de0599a025c68789300b4f84f2bd8b52a79409ae3edb18aee850905",
+      "blockNumber": 9487602
+    },
+    "ChainDepositContract_BSC": {
+      "address": "0xD8E4a3a42C5704A5bb996C679606785C34dE5D43",
+      "transactionHash": "0x834506d8d635fdb732f9b73e333605ec90446050966c2e0155c64feb43023296",
+      "blockNumber": 9487603
+    },
+    "ChainDepositContract_Arbitrum": {
+      "address": "0x1FDc7523c9355a6010c86e8Cc614605AAef85700",
+      "transactionHash": "0x0a55ff4cf76979dc228da28c41aa85de8b154096f4a274fc9e94a31908b1be43",
+      "blockNumber": 9487604
+    },
+    "ChainDepositContract_Optimism": {
+      "address": "0xd7CBf08480ba78814382f918230485DAFe02FdC6",
+      "transactionHash": "0x3f456eac3f3c23153d8acfc285ae4e2898d685e9bacdfa31a1cf1601a10da8a8",
+      "blockNumber": 9487605
     }
   },
-  "timestamp": "2025-10-21T21:06:33.172Z"
+  "timestamp": 1761400874877
 }

@@ -26,7 +26,7 @@ export class TokenomicsService {
   private provider: ethers.Provider;
   private signer?: ethers.Signer;
 
-  constructor(priceOracleAddress: string, provider: ethers.Provider, signer?: ethers.Signer) {
+  constructor(provider: ethers.Provider, signer: ethers.Signer, priceOracleAddress: string) {
     this.provider = provider;
     this.signer = signer;
     this.priceOracle = new ethers.Contract(
@@ -38,12 +38,21 @@ export class TokenomicsService {
         'function deactivateToken() external',
         'function getCurrentPrice() view returns (uint256)',
         'function calculatePrice(uint256) view returns (uint256)',
+        'function getTokensMinted() view returns (uint256)',
         'event TokenomicsUpdated(uint256,uint256,uint256)',
         'event CoinsReleased(uint256,uint256,uint256)',
         'event ActivationProcessed(uint256,uint256,bool)'
       ],
       signer || provider
     ) as unknown as PriceOracle;
+  }
+
+  /**
+   * @dev Get tokens minted count
+   */
+  async getTokensMinted(): Promise<bigint> {
+    const state = await this.priceOracle.getTokenomicsState();
+    return state[1]; // xymMinted is the second element
   }
 
   /**

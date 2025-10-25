@@ -1,0 +1,42 @@
+{
+  "mcp": {
+    "server": {
+      "port": 3000,
+      "host": "0.0.0.0"
+    },
+    "blockscout": {
+      "apiUrl": "https://api.blockscout.com",
+      "apiKey": "",
+      "chains": [
+        {
+          "id": 1,
+          "name": "Ethereum",
+          "rpcUrl": "https://eth.llamarpc.com"
+        },
+        {
+          "id": 11155111,
+          "name": "Sepolia",
+          "rpcUrl": "https://sepolia.infura.io/v3/YOUR_INFURA_KEY"
+        }
+      ]
+    },
+    "tools": {
+      "get_chains_list": {
+        "enabled": true,
+        "description": "Get list of supported chains"
+      },
+      "get_address_info": {
+        "enabled": true,
+        "description": "Get detailed information about an address"
+      },
+      "get_token_holdings": {
+        "enabled": true,
+        "description": "Get token holdings for an address"
+      },
+      "analyze_activation_sequence": {
+        "enabled": true,
+        "description": "Analyze XMBL token activation sequence for anomalies"
+      }
+    }
+  }
+}

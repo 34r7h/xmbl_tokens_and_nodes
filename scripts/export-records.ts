@@ -99,11 +99,20 @@ async function exportContractEvents(
       blockscoutMonitor.addContract(1, contract.address, []);
       
       // Index events
-      const eventsIndexed = await blockscoutMonitor.indexEvents(1, contract.address);
-      console.log(`  ✓ Indexed ${eventsIndexed} events`);
+      await blockscoutMonitor.indexAvailEvents(1, contract.address, []);
+      console.log(`  ✓ Events indexed successfully`);
+      
+      // Push events to Blockscout/Autoscout
+      await blockscoutMonitor.pushToAutoscout({
+        chainId: 1,
+        contractAddress: contract.address,
+        events: [],
+        timestamp: new Date().toISOString()
+      });
+      console.log(`  ✓ Events pushed to Blockscout/Autoscout`);
       
       // Export events
-      const events = blockscoutMonitor.exportEvents(1, contract.address);
+      const events = blockscoutMonitor.getContractEvents(1, contract.address);
       allEvents.push(...events.map(event => ({
         ...event,
         contractName: contract.name,
@@ -193,7 +202,7 @@ async function exportMonitoringData(
   for (const [name, contract] of Object.entries(config.contracts)) {
     try {
       blockscoutMonitor.addContract(1, contract.address, []);
-      const events = blockscoutMonitor.exportEvents(1, contract.address);
+      const events = blockscoutMonitor.getContractEvents(1, contract.address);
       
       monitoringData.contracts[name] = {
         address: contract.address,

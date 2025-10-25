@@ -1,0 +1,41 @@
+{
+  "network": "localhost",
+  "contracts": {
+    "PriceOracle": {
+      "address": "0x158d291D8b47F056751cfF47d1eEcd19FDF9B6f8",
+      "transactionHash": "0xf69db7bc2a4d457eacac66489724e7feb7c7f647ee149787f96bd33e460cfab1",
+      "blockNumber": 308
+    },
+    "DepositManager": {
+      "address": "0x2F54D1563963fC04770E85AF819c89Dc807f6a06",
+      "transactionHash": "0xec2c8fc8aadc584fce806c20625300482edca5dfb614a03dd25519969fe1ced8",
+      "blockNumber": 309
+    },
+    "ChainDepositContract_Ethereum": {
+      "address": "0xF342E904702b1D021F03f519D6D9614916b03f37",
+      "transactionHash": "0xa4e3c5c89527ad7b9ccf05a24a88c578c9d207a77f99736e4942c77e00c5145d",
+      "blockNumber": 310
+    },
+    "ChainDepositContract_Polygon": {
+      "address": "0x9849832a1d8274aaeDb1112ad9686413461e7101",
+      "transactionHash": "0x514657c6ccf1361e81ae6061ce1126b62ace48694407ef925d4e9a75fffba501",
+      "blockNumber": 311
+    },
+    "ChainDepositContract_BSC": {
+      "address": "0xa4E00CB342B36eC9fDc4B50b3d527c3643D4C49e",
+      "transactionHash": "0x44d696ab8a3c538c7a7e31f881ced62946e5466e82a2e8f770e9cc62ec30c151",
+      "blockNumber": 312
+    },
+    "ChainDepositContract_Arbitrum": {
+      "address": "0x8ac5eE52F70AE01dB914bE459D8B3d50126fd6aE",
+      "transactionHash": "0xfc3686a5cb7a91a31a7449b88b86c8c979f4f2f75720ec481390248b42949c31",
+      "blockNumber": 313
+    },
+    "ChainDepositContract_Optimism": {
+      "address": "0x325c8Df4CFb5B068675AFF8f62aA668D1dEc3C4B",
+      "transactionHash": "0xa6137eadeebd6995e9b9fbf11bf2b9699fbceddf0167c600a6e8180706da4bd2",
+      "blockNumber": 314
+    }
+  },
+  "timestamp": 1761399074708
+}

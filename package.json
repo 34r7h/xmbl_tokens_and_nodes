@@ -6,6 +6,9 @@
   "scripts": {
     "build": "hardhat compile",
     "test": "hardhat test",
+    "test:integration": "hardhat test --grep 'Integration'",
+    "test:mock": "hardhat test --grep -v 'Integration|E2E'",
+    "test:e2e": "hardhat test test/E2E.*.test.ts",
     "deploy": "hardhat run scripts/deploy.ts",
     "activate": "ts-node scripts/activate.ts",
     "monitor": "ts-node scripts/monitor.ts",
@@ -13,7 +16,17 @@
     "verify-sequence": "ts-node scripts/verify-sequence.ts",
     "export-records": "ts-node scripts/export-records.ts",
     "setup-autoscout": "ts-node scripts/setup-autoscout.ts",
-    "test-flow": "ts-node scripts/test-flow.ts"
+    "test-flow": "ts-node scripts/test-flow.ts",
+    "setup:production": "ts-node scripts/setup-production.ts",
+    "deploy:production": "ts-node scripts/deploy-production.ts",
+    "health:check": "ts-node scripts/health-check.ts",
+    "get-api-keys": "ts-node scripts/get-api-keys.ts",
+    "dashboard": "concurrently \"npm run dashboard:server\" \"npm run dashboard:client\"",
+    "dashboard:server": "node dashboard/server/index.cjs",
+    "dashboard:client": "cd dashboard && npm run client",
+    "dashboard:build": "cd dashboard && npm run build",
+    "dashboard:install": "cd dashboard && npm install",
+    "verify:testnet": "ts-node scripts/verify-testnet.ts"
   },
   "keywords": [
     "blockchain",
@@ -31,13 +44,22 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@avail-project/nexus-core": "^0.0.2",
     "@openzeppelin/contracts": "^4.9.6",
     "@pythnetwork/pyth-evm-js": "^0.4.0",
     "@pythnetwork/pyth-sdk-solidity": "^4.2.0",
+    "@types/ws": "^8.18.1",
+    "@xchainjs/xchain-bitcoin": "^2.0.9",
+    "@xchainjs/xchain-ethereum": "^2.0.13",
+    "@xchainjs/xchain-thorchain": "^3.0.13",
+    "@xchainjs/xchain-util": "^2.0.5",
     "axios": "^1.6.0",
+    "bitcoinjs-lib": "^7.0.0",
     "dotenv": "^16.3.0",
+    "ecpair": "^3.0.0",
     "ethers": "^6.8.0",
-    "ws": "^8.14.0",
-    "it-ws": "^6.0.0"
+    "it-ws": "^6.1.5",
+    "tiny-secp256k1": "^2.2.4",
+    "ws": "^8.18.3"
   }
 }

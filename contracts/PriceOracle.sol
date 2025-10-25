@@ -21,7 +21,7 @@ contract PriceOracle {
     // Tokenomics Configuration (from Firebase implementation)
     uint256 public constant COIN_SUPPLY = 999999999; // Total coin supply
     uint256 public constant COIN_DIVIDE = 9; // Initial divisor for coin distribution
-    uint256 public constant COIN_RELEASE_TARGET = 369; // Initial release target (0.00369 BTC in satoshis)
+    uint256 public constant COIN_RELEASE_TARGET = 369000; // Initial release target (0.00369 BTC in satoshis)
     uint256 public constant GROWTH_FACTOR = 1; // Minimal growth factor
     
     IPyth public immutable pyth;
@@ -61,12 +61,11 @@ contract PriceOracle {
      * Price = previousPrice + (previousPrice / (GROWTH_FACTOR * tokenNumber))
      * Always rounds UP to nearest satoshi
      */
-    function calculatePrice(uint256 _tokensMinted) public view returns (uint256) {
+    function calculatePrice(uint256 _tokensMinted) public pure returns (uint256) {
         if (_tokensMinted == 0) return STARTING_PRICE;
         
-        // Use the new price calculation from Firebase implementation
-        // newPrice = cost + (cost / (GROWTH_FACTOR * (tokensMinted + 1)))
-        uint256 cost = xymNextPrice;
+        // Firebase tokenomics formula: newPrice = cost + (cost / (GROWTH_FACTOR * (tokensMinted + 1)))
+        uint256 cost = STARTING_PRICE;
         uint256 growthMultiplier = (GROWTH_FACTOR * (_tokensMinted + 1)) / 1000;
         
         if (growthMultiplier == 0) return cost;
@@ -100,18 +99,15 @@ contract PriceOracle {
         // Store previous price
         xymPrevPrice = xymNextPrice;
         
-        // Calculate new price using corrected algorithm: cost + Math.ceil((cost * sqrt(5)) / (2 * x))
-        uint256 cost = xymNextPrice;
-        uint256 sqrt5 = 2236; // sqrt(5) * 1000 for precision
-        uint256 denominator = 2 * xymMinted;
+        // Firebase tokenomics formula: newPrice = cost + (cost / (GROWTH_FACTOR * (tokensMinted + 1)))
+        uint256 cost = xymPrevPrice > 0 ? xymPrevPrice : STARTING_PRICE;
+        uint256 growthMultiplier = (GROWTH_FACTOR * (xymMinted + 1)) / 1000;
         
-        if (denominator > 0) {
-            uint256 priceIncrease = (cost * sqrt5) / denominator;
-            // Math.ceil equivalent - add 1 if there's any remainder
-            if ((cost * sqrt5) % denominator > 0) {
-                priceIncrease += 1;
-            }
+        if (growthMultiplier > 0) {
+            uint256 priceIncrease = cost / growthMultiplier;
             xymNextPrice = cost + priceIncrease;
+        } else {
+            xymNextPrice = STARTING_PRICE;
         }
         
         // Update proof of faith (total BTC deposited)

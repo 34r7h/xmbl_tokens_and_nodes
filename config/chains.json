@@ -4,7 +4,7 @@
       "name": "Ethereum",
       "chainId": 1,
       "network": "sepolia",
-      "rpcUrl": "https://sepolia.infura.io/v3/YOUR_KEY",
+      "rpcUrl": "https://mainnet.infura.io/v3/YOUR_INFURA_KEY",
       "explorer": "https://sepolia.etherscan.io",
       "nativeCurrency": {
         "name": "Ether",
@@ -18,7 +18,7 @@
       "name": "Polygon",
       "chainId": 137,
       "network": "mumbai",
-      "rpcUrl": "https://polygon-mumbai.infura.io/v3/YOUR_KEY",
+      "rpcUrl": "https://polygon-mainnet.infura.io/v3/YOUR_INFURA_KEY",
       "explorer": "https://mumbai.polygonscan.com",
       "nativeCurrency": {
         "name": "MATIC",
@@ -32,7 +32,7 @@
       "name": "Binance Smart Chain",
       "chainId": 97,
       "network": "bscTestnet",
-      "rpcUrl": "https://data-seed-prebsc-1-s1.binance.org:8545",
+      "rpcUrl": "https://bsc-dataseed.binance.org",
       "explorer": "https://testnet.bscscan.com",
       "nativeCurrency": {
         "name": "BNB",
@@ -46,7 +46,7 @@
       "name": "Arbitrum",
       "chainId": 421614,
       "network": "arbitrumSepolia",
-      "rpcUrl": "https://sepolia-rollup.arbitrum.io/rpc",
+      "rpcUrl": "https://arbitrum-mainnet.infura.io/v3/YOUR_INFURA_KEY",
       "explorer": "https://sepolia.arbiscan.io",
       "nativeCurrency": {
         "name": "Ether",
@@ -60,7 +60,7 @@
       "name": "Optimism",
       "chainId": 11155420,
       "network": "optimismSepolia",
-      "rpcUrl": "https://sepolia.optimism.io",
+      "rpcUrl": "https://optimism-mainnet.infura.io/v3/YOUR_INFURA_KEY",
       "explorer": "https://sepolia-optimism.etherscan.io",
       "nativeCurrency": {
         "name": "Ether",
@@ -72,11 +72,17 @@
     }
   },
   "defaultNetwork": "ethereum",
-  "supportedChains": [1, 137, 97, 421614, 11155420],
+  "supportedChains": [
+    1,
+    137,
+    97,
+    421614,
+    11155420
+  ],
   "chainNames": {
     "1": "Ethereum",
-    "137": "Polygon", 
     "97": "BSC",
+    "137": "Polygon",
     "421614": "Arbitrum",
     "11155420": "Optimism"
   }

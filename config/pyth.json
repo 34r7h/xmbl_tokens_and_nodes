@@ -13,12 +13,14 @@
       },
       "ETH_USD": {
         "id": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
-        "name": "ETH/USD", 
+        "name": "ETH/USD",
         "description": "Ethereum to US Dollar price feed",
         "decimals": 8,
         "exponent": -8,
         "supported": true
-      }
+      },
+      "btcUsd": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+      "ethUsd": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace"
     },
     "defaultFeed": "BTC_USD",
     "updateInterval": 30000,
@@ -38,7 +40,7 @@
       "btcUsdPriceId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
     },
     "mumbai": {
-      "pythAddress": "0x0000000000000000000000000000000000000000", 
+      "pythAddress": "0x0000000000000000000000000000000000000000",
       "btcUsdPriceId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
     },
     "bscTestnet": {

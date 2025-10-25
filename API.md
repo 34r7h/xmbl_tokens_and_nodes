@@ -1,709 +1,633 @@
-# XMBL Token API Documentation
+# XMBL API Documentation
 
 ## Overview
 
-This document provides comprehensive API documentation for the XMBL token activation platform, covering smart contract interfaces, service APIs, and CLI tool usage.
+The XMBL E2E Cross-Chain Token Activation Platform provides a comprehensive API for cross-chain token activation, real-time price feeds, and blockchain monitoring. This document covers all available APIs and their usage.
 
-## Smart Contract APIs
+## Base URLs
 
-### PriceOracle Contract
+- **Local Development**: `http://localhost:3000`
+- **Testnet**: `https://api-testnet.xmbl.tokens`
+- **Production**: `https://api.xmbl.tokens`
 
-**Address**: Deployed per network (see deployment configs)
-**Purpose**: Implements XMBL token economics with Pyth oracle integration
+## Authentication
 
-#### Functions
+All API requests require authentication using API keys:
 
-##### `calculatePrice(uint256 _tokensMinted) → uint256`
-Calculates token price using golden ratio formula: `x / (Phi * y)`
-
-**Parameters:**
-- `_tokensMinted`: Number of tokens minted
-
-**Returns:**
-- `uint256`: Token price in satoshis (rounded up)
-
-**Example:**
-```solidity
-uint256 price = priceOracle.calculatePrice(100);
-// Returns: 100000000 (1 satoshi, rounded up)
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     https://api.xmbl.tokens/v1/...
 ```
 
-##### `activateToken()`
-Increases tokens minted and updates price
+## Core Services API
 
-**Events:**
-- `TokenActivated(uint256 newPrice, uint256 tokensMinted)`
+### 1. Nexus Intent Service
 
-**Example:**
-```solidity
-await priceOracle.activateToken();
-```
+Manages cross-chain intents using Avail Nexus SDK.
 
-##### `deactivateToken()`
-Decreases tokens minted and updates price
+#### Create Intent
 
-**Requirements:**
-- `tokensMinted > 0`
+```http
+POST /v1/intents
+Content-Type: application/json
 
-**Events:**
-- `TokenDeactivated(uint256 newPrice, uint256 tokensDeactivated)`
-
-**Example:**
-```solidity
-await priceOracle.deactivateToken();
-```
-
-##### `calculateNetworkFee(uint256 amount) → uint256`
-Calculates 3% network fee, rounded up to nearest satoshi
-
-**Parameters:**
-- `amount`: Amount to calculate fee for
-
-**Returns:**
-- `uint256`: Network fee in satoshis
-
-**Example:**
-```solidity
-uint256 fee = priceOracle.calculateNetworkFee(ethers.parseEther("1"));
-// Returns: 100000000 (1 satoshi, rounded up)
-```
-
-##### `getCurrentPrice() → uint256`
-Gets current token price
-
-**Returns:**
-- `uint256`: Current price in satoshis
-
-##### `getBtcPrice() → uint256`
-Gets BTC price from Pyth oracle (mock implementation)
-
-**Returns:**
-- `uint256`: BTC price in satoshis
-
-#### Events
-
-```solidity
-event PriceUpdated(uint256 newPrice, uint256 tokensMinted);
-event TokenActivated(uint256 newPrice, uint256 tokensMinted);
-event TokenDeactivated(uint256 newPrice, uint256 tokensDeactivated);
-event ActivationSettled(uint256 activationId, bool success);
-```
-
-### DepositManager Contract
-
-**Address**: Deployed per network
-**Purpose**: Central contract for managing cross-chain deposits and sequential activations
-
-#### Functions
-
-##### `receiveDeposit(address _user, uint256 _amount, uint256 _btcEquivalent) → uint256`
-Receives deposit and adds to activation queue
-
-**Parameters:**
-- `_user`: User address
-- `_amount`: Deposit amount
-- `_btcEquivalent`: BTC equivalent value
-
-**Returns:**
-- `uint256`: Activation ID
-
-**Events:**
-- `DepositReceived(uint256 depositId, address user, uint256 amount, uint256 btcEquivalent)`
-- `ActivationQueued(uint256 depositId, uint256 activationId, uint256 lockedPrice)`
-
-##### `processNextActivation()`
-Processes next activation in queue (owner only)
-
-**Events:**
-- `ActivationProcessed(uint256 activationId, address user, uint256 finalPrice)`
-- `ActivationSettlementFailed(uint256 activationId)`
-
-##### `getDeposit(uint256 _depositId) → Deposit`
-Gets deposit details
-
-**Parameters:**
-- `_depositId`: Deposit ID
-
-**Returns:**
-```solidity
-struct Deposit {
-    uint256 id;
-    address user;
-    uint256 amount;
-    uint256 btcEquivalent;
-    uint256 activationPrice;
-    bool processed;
-    bool settled;
+{
+  "chainId": 1,
+  "depositId": 123,
+  "user": "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+  "amount": "1000000000000000000",
+  "btcEquivalent": "0.001"
 }
 ```
 
-##### `getActivation(uint256 _activationId) → Activation`
-Gets activation details
-
-**Parameters:**
-- `_activationId`: Activation ID
-
-**Returns:**
-```solidity
-struct Activation {
-    uint256 id;
-    uint256 depositId;
-    address user;
-    uint256 amount;
-    uint256 btcEquivalent;
-    uint256 lockedPrice;
-    bool completed;
+**Response:**
+```json
+{
+  "intentId": "intent_1_123_1640995200000",
+  "availIntentId": "avail_intent_abc123",
+  "status": "pending",
+  "timestamp": 1640995200000,
+  "estimatedSettlement": 1640995800000
 }
 ```
 
-##### `getActivationQueueLength() → uint256`
-Gets current queue length
+#### Get Intent Status
 
-**Returns:**
-- `uint256`: Number of pending activations
-
-#### Events
-
-```solidity
-event DepositReceived(uint256 depositId, address user, uint256 amount, uint256 btcEquivalent);
-event ActivationQueued(uint256 depositId, uint256 activationId, uint256 lockedPrice);
-event ActivationProcessed(uint256 activationId, address user, uint256 finalPrice);
-event ActivationSettlementFailed(uint256 activationId);
+```http
+GET /v1/intents/{intentId}
 ```
 
-### ChainDepositContract Contract
-
-**Address**: Deployed per chain
-**Purpose**: Accepts user deposits and creates cross-chain intents
-
-#### Functions
-
-##### `deposit(address token, uint256 amount)`
-Accepts user deposits (ERC20 or native currency)
-
-**Parameters:**
-- `token`: Token address (0x0 for native currency)
-- `amount`: Deposit amount
-
-**Events:**
-- `DepositMade(uint256 depositId, address user, address token, uint256 amount, uint256 btcEquivalent)`
-
-**Example:**
-```solidity
-// Native currency deposit
-await chainDepositContract.deposit(ethers.ZeroAddress, ethers.parseEther("1"), { value: ethers.parseEther("1") });
-
-// ERC20 token deposit
-await chainDepositContract.deposit(tokenAddress, ethers.parseEther("100"));
-```
-
-##### `createIntent(uint256 depositId) → uint256`
-Creates cross-chain intent (owner only)
-
-**Parameters:**
-- `depositId`: Deposit ID
-
-**Returns:**
-- `uint256`: Activation ID
-
-**Events:**
-- `IntentCreated(uint256 depositId, uint256 activationId, string intentData)`
-
-##### `calculateBtcEquivalent(address token, uint256 amount) → uint256`
-Calculates BTC equivalent for token amount
-
-**Parameters:**
-- `token`: Token address
-- `amount`: Token amount
-
-**Returns:**
-- `uint256`: BTC equivalent value
-
-**Events:**
-- `BtcEquivalentCalculated(address token, uint256 amount, uint256 btcEquivalent)`
-
-##### `getDeposit(uint256 _depositId) → Deposit`
-Gets deposit details
-
-**Parameters:**
-- `_depositId`: Deposit ID
-
-**Returns:**
-```solidity
-struct Deposit {
-    uint256 id;
-    address user;
-    address token;
-    uint256 amount;
-    uint256 btcEquivalent;
-    bool processed;
+**Response:**
+```json
+{
+  "intentId": "intent_1_123_1640995200000",
+  "status": "completed",
+  "progress": {
+    "currentStep": "settlement",
+    "totalSteps": 3,
+    "completedSteps": 2
+  },
+  "transactions": [
+    {
+      "step": "bridge",
+      "hash": "0x...",
+      "explorerUrl": "https://etherscan.io/tx/0x..."
+    }
+  ]
 }
 ```
 
-#### Events
+#### List Intents
 
-```solidity
-event DepositMade(uint256 depositId, address user, address token, uint256 amount, uint256 btcEquivalent);
-event IntentCreated(uint256 depositId, uint256 activationId, string intentData);
-event BtcEquivalentCalculated(address token, uint256 amount, uint256 btcEquivalent);
+```http
+GET /v1/intents?status=pending&limit=10&offset=0
 ```
 
-## Service APIs
-
-### NexusIntentService
-
-**Purpose**: Manages cross-chain intents using Avail Nexus SDK
-
-#### Constructor
-
-```typescript
-constructor(
-  provider: ethers.Provider,
-  depositManagerAddress: string,
-  chainContracts: Map<number, string>
-)
+**Response:**
+```json
+{
+  "intents": [...],
+  "pagination": {
+    "total": 100,
+    "limit": 10,
+    "offset": 0,
+    "hasMore": true
+  }
+}
 ```
 
-#### Methods
+### 2. Pyth Oracle Service
 
-##### `initializeNexus(): Promise<void>`
-Initializes Avail Nexus SDK
+Provides real-time price feeds and on-chain updates.
 
-**Example:**
-```typescript
-await nexusService.initializeNexus();
+#### Get BTC Price
+
+```http
+GET /v1/prices/btc
 ```
 
-##### `createIntent(chainId: number, depositId: number, user: string, amount: string, btcEquivalent: string): Promise<string>`
-Creates cross-chain intent
-
-**Parameters:**
-- `chainId`: Source chain ID
-- `depositId`: Deposit ID
-- `user`: User address
-- `amount`: Deposit amount
-- `btcEquivalent`: BTC equivalent value
-
-**Returns:**
-- `Promise<string>`: Intent ID
-
-**Example:**
-```typescript
-const intentId = await nexusService.createIntent(1, 1, "0x1234...", "1000000000000000000", "5000000000");
+**Response:**
+```json
+{
+  "price": 50000.25,
+  "timestamp": 1640995200000,
+  "confidence": 0.95,
+  "exponent": -8,
+  "feedId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+}
 ```
 
-##### `getIntentStatus(intentId: string): any`
-Gets intent status
+#### Update Price Feeds
 
-**Parameters:**
-- `intentId`: Intent ID
+```http
+POST /v1/prices/update
+Content-Type: application/json
 
-**Returns:**
-- Intent status object
-
-##### `getQueueStatus(): { total: number; pending: number; processing: number; completed: number; failed: number }`
-Gets queue status
-
-**Returns:**
-- Queue statistics
-
-##### `getAllIntents(): any[]`
-Gets all intents
-
-**Returns:**
-- Array of all intents
-
-##### `clearCompletedIntents(): void`
-Clears completed intents from queue
-
-##### `emergencyStop(): void`
-Stops intent processing
-
-### PythOracleService
-
-**Purpose**: Fetches real-time BTC price feeds from Pyth Network
-
-#### Constructor
-
-```typescript
-constructor(
-  provider: ethers.Provider,
-  priceOracleAddress: string,
-  hermesUrl: string,
-  btcUsdPriceFeedId: string,
-  cacheTimeout: number = 60000
-)
+{
+  "feedIds": ["0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"]
+}
 ```
 
-#### Methods
-
-##### `fetchBtcPrice(): Promise<number | null>`
-Fetches BTC price from Pyth Hermes API
-
-**Returns:**
-- `Promise<number | null>`: BTC price in USD
-
-**Example:**
-```typescript
-const btcPrice = await pythOracle.fetchBtcPrice();
-console.log(`BTC Price: $${btcPrice}`);
+**Response:**
+```json
+{
+  "transactionHash": "0x...",
+  "gasUsed": "150000",
+  "status": "success"
+}
 ```
 
-##### `updatePriceFeeds(): Promise<string>`
-Updates on-chain price feeds
+#### Get Price History
 
-**Returns:**
-- `Promise<string>`: Transaction hash
-
-**Example:**
-```typescript
-const txHash = await pythOracle.updatePriceFeeds();
-console.log(`Update transaction: ${txHash}`);
+```http
+GET /v1/prices/btc/history?from=1640995200000&to=1640995800000&interval=1h
 ```
 
-##### `startPeriodicUpdates(intervalMs: number): void`
-Starts periodic price updates
-
-**Parameters:**
-- `intervalMs`: Update interval in milliseconds
-
-**Example:**
-```typescript
-pythOracle.startPeriodicUpdates(30000); // Update every 30 seconds
+**Response:**
+```json
+{
+  "prices": [
+    {
+      "timestamp": 1640995200000,
+      "price": 50000.25,
+      "confidence": 0.95
+    }
+  ],
+  "interval": "1h",
+  "count": 1
+}
 ```
 
-##### `stopPeriodicUpdates(): void`
-Stops periodic updates
+### 3. Blockscout Monitor Service
 
-##### `clearCache(): void`
-Clears price cache
+Monitors blockchain events and provides transparency.
 
-##### `getCacheStats(): { size: number; oldestEntry: number | null; newestEntry: number | null }`
-Gets cache statistics
+#### Add Contract to Monitoring
 
-##### `getPriceFeedStatus(): Promise<any>`
-Gets price feed status
+```http
+POST /v1/monitoring/contracts
+Content-Type: application/json
 
-### BlockscoutMonitorService
-
-**Purpose**: Monitors blockchain events and provides transparency
-
-#### Constructor
-
-```typescript
-constructor(provider: ethers.Provider)
+{
+  "chainId": 1,
+  "address": "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+  "name": "PriceOracle",
+  "events": ["PriceUpdated", "ActivationProcessed"]
+}
 ```
 
-#### Methods
-
-##### `addContract(chainId: number, contractAddress: string, contractABI: any[]): void`
-Adds contract to monitoring
-
-**Parameters:**
-- `chainId`: Chain ID
-- `contractAddress`: Contract address
-- `contractABI`: Contract ABI
-
-**Example:**
-```typescript
-blockscoutMonitor.addContract(1, "0x1234...", contractABI);
+**Response:**
+```json
+{
+  "contractId": "contract_1_0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+  "status": "monitoring",
+  "eventsIndexed": 0
+}
 ```
 
-##### `removeContract(chainId: number, contractAddress: string): void`
-Removes contract from monitoring
+#### Get Contract Events
 
-##### `indexEvents(chainId: number, contractAddress: string, fromBlock?: number, toBlock?: number): Promise<number>`
-Indexes events for contract
-
-**Parameters:**
-- `chainId`: Chain ID
-- `contractAddress`: Contract address
-- `fromBlock`: Start block (optional)
-- `toBlock`: End block (optional, default: 'latest')
-
-**Returns:**
-- `Promise<number>`: Number of events indexed
-
-##### `exportEvents(chainId: number, contractAddress: string): any[]`
-Exports indexed events
-
-**Returns:**
-- Array of events
-
-##### `clearEvents(chainId: number, contractAddress: string): void`
-Clears events for contract
-
-##### `pushToAutoscout(data: any): Promise<void>`
-Pushes data to Autoscout instance
-
-##### `getTransactionDetails(txHash: string, chainId: number): Promise<any>`
-Gets transaction details
-
-### BlockscoutMCPService
-
-**Purpose**: Integrates with Blockscout Model Context Protocol for AI analysis
-
-#### Constructor
-
-```typescript
-constructor(config: { apiKey: string; mcpServerUrl: string })
+```http
+GET /v1/monitoring/contracts/{contractId}/events?from=1640995200000&to=1640995800000
 ```
 
-#### Methods
-
-##### `getAvailableTools(): Promise<MCPTool[]>`
-Gets available MCP tools
-
-**Returns:**
-- Array of available tools
-
-##### `getToolDetails(toolName: string): Promise<MCPTool | null>`
-Gets tool details
-
-**Parameters:**
-- `toolName`: Tool name
-
-##### `analyzeActivationSequence(chainId: number, contractAddress: string, timeRange?: string): Promise<any>`
-Analyzes activation sequence
-
-**Parameters:**
-- `chainId`: Chain ID
-- `contractAddress`: Contract address
-- `timeRange`: Time range (default: '24h')
-
-##### `getChainsList(): Promise<any[]>`
-Gets supported chains
-
-##### `getAddressInfo(chainId: number, address: string): Promise<any>`
-Gets address information
-
-##### `getTokenHoldings(chainId: number, address: string): Promise<any[]>`
-Gets token holdings
-
-### MCPApplication
-
-**Purpose**: Full application using Blockscout MCP server for conversational blockchain analytics
-
-#### Constructor
-
-```typescript
-constructor(mcpService: BlockscoutMCPService)
+**Response:**
+```json
+{
+  "events": [
+    {
+      "transactionHash": "0x...",
+      "blockNumber": 12345678,
+      "eventName": "PriceUpdated",
+      "data": {
+        "newPrice": "1000000000",
+        "tokensMinted": "5"
+      },
+      "timestamp": 1640995200000
+    }
+  ],
+  "total": 1,
+  "hasMore": false
+}
 ```
 
-#### Methods
+#### Export Events
 
-##### `processQuery(query: string): Promise<any>`
-Processes user query using MCP tools
-
-**Parameters:**
-- `query`: User query
-
-**Returns:**
-- Response object with analysis and recommendations
-
-**Example:**
-```typescript
-const result = await mcpApp.processQuery("Analyze activation sequence for contract 0x1234...");
-console.log(result.response);
-console.log(result.analysis);
-console.log(result.recommendations);
+```http
+GET /v1/monitoring/contracts/{contractId}/export?format=csv&from=1640995200000
 ```
 
-##### `getConversationHistory(): ConversationEntry[]`
-Gets conversation history
-
-##### `clearConversationHistory(): void`
-Clears conversation history
-
-##### `exportConversationHistory(format: 'json' | 'text' = 'json'): string`
-Exports conversation history
-
-## CLI Tool APIs
-
-### Deploy Script
-
-**Usage:**
-```bash
-npm run deploy
+**Response:**
+```csv
+transactionHash,blockNumber,eventName,data,timestamp
+0x...,12345678,PriceUpdated,"{""newPrice"":""1000000000"",""tokensMinted"":""5""}",1640995200000
 ```
 
-**Output:**
-- Contract addresses
-- Transaction hashes
-- Environment variables
-- Deployment configuration
+### 4. MCP Application Service
 
-### Activate Script
+AI-powered blockchain analytics and auditing.
 
-**Usage:**
-```bash
-npm run activate <user_address> <amount> <token_address> <chain_id>
+#### Process Query
+
+```http
+POST /v1/ai/query
+Content-Type: application/json
+
+{
+  "query": "Analyze the activation sequence for anomalies",
+  "context": {
+    "chainId": 1,
+    "timeRange": "24h",
+    "contractAddress": "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
+  }
+}
 ```
 
-**Parameters:**
-- `user_address`: User wallet address
-- `amount`: Deposit amount (in wei)
-- `token_address`: Token address (0x0 for native currency)
-- `chain_id`: Chain ID
-
-**Example:**
-```bash
-npm run activate 0x1234567890123456789012345678901234567890 1000000000000000000 0x0000000000000000000000000000000000000000 1
+**Response:**
+```json
+{
+  "response": "Based on the analysis of the activation sequence, I found 3 potential anomalies...",
+  "analysis": {
+    "anomalies": [
+      {
+        "type": "unusual_price_spike",
+        "severity": "medium",
+        "description": "Price increased by 150% in 1 hour",
+        "timestamp": 1640995200000
+      }
+    ],
+    "recommendations": [
+      "Monitor price volatility more closely",
+      "Implement additional price validation"
+    ]
+  },
+  "confidence": 0.87
+}
 ```
 
-### Monitor Script
+#### Get Conversation History
 
-**Usage:**
-```bash
-npm run monitor [start|events|prices|status|export]
+```http
+GET /v1/ai/conversations?limit=10&offset=0
 ```
 
-**Commands:**
-- `start`: Start full monitoring
-- `events`: Monitor blockchain events
-- `prices`: Monitor price feeds
-- `status`: Show current status
-- `export`: Export monitoring data
-
-### Fetch Prices Script
-
-**Usage:**
-```bash
-npm run fetch-prices [current|history|update|status]
+**Response:**
+```json
+{
+  "conversations": [
+    {
+      "id": "conv_123",
+      "query": "Analyze the activation sequence for anomalies",
+      "response": "Based on the analysis...",
+      "timestamp": 1640995200000,
+      "confidence": 0.87
+    }
+  ],
+  "pagination": {
+    "total": 50,
+    "limit": 10,
+    "offset": 0,
+    "hasMore": true
+  }
+}
 ```
 
-**Commands:**
-- `current`: Fetch current prices
-- `history`: Fetch price history
-- `update`: Update on-chain prices
-- `status`: Show price feed status
+### 5. Tokenomics Service
 
-**Formats:**
-- `json`: JSON format
-- `csv`: CSV format
-- `table`: Table format
+Manages XMBL token economics and pricing.
 
-### Verify Sequence Script
+#### Get Tokenomics State
 
-**Usage:**
-```bash
-npm run verify-sequence [verify|audit|analyze|report] [contract_address] [time_range]
+```http
+GET /v1/tokenomics/state
 ```
 
-**Commands:**
-- `verify`: Verify activation sequence integrity
-- `audit`: Perform AI-powered audit
-- `analyze`: Analyze sequence patterns
-- `report`: Generate detailed report
-
-### Export Records Script
-
-**Usage:**
-```bash
-npm run export-records [json|csv] [output_dir]
+**Response:**
+```json
+{
+  "proofOfFaith": "1000000000",
+  "xymMinted": 5,
+  "xymNextPrice": "1000000000",
+  "xymPrevPrice": "500000000",
+  "xyDivisor": 111111111,
+  "xyReleased": 0,
+  "xyRemaining": 999999999,
+  "xyReleaseTarget": "369000",
+  "xyNextAmount": 9
+}
 ```
 
-**Parameters:**
-- Format: `json` or `csv`
-- Output directory (optional)
+#### Activate Token
 
-### Setup Autoscout Script
+```http
+POST /v1/tokenomics/activate
+Content-Type: application/json
 
-**Usage:**
-```bash
-npm run setup-autoscout [setup|configure|test|start]
+{
+  "user": "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+  "amount": "1000000000"
+}
 ```
 
-**Commands:**
-- `setup`: Initial Autoscout setup
-- `configure`: Configure Autoscout settings
-- `test`: Test Autoscout functionality
-- `start`: Start Autoscout services
-
-### Test Flow Script
-
-**Usage:**
-```bash
-npm run test-flow [full|intent|price|monitor|ai] [num_users]
+**Response:**
+```json
+{
+  "transactionHash": "0x...",
+  "newPrice": "1000000000",
+  "tokensMinted": 6,
+  "proofOfFaith": "2000000000"
+}
 ```
 
-**Commands:**
-- `full`: Complete end-to-end test
-- `intent`: Test cross-chain intent processing
-- `price`: Test price feed integration
-- `monitor`: Test monitoring and transparency
-- `ai`: Test AI auditing capabilities
+#### Get Coin Distribution Status
+
+```http
+GET /v1/tokenomics/coin-distribution
+```
+
+**Response:**
+```json
+{
+  "canReleaseCoins": true,
+  "nextReleaseAmount": 9,
+  "releaseTarget": "369000",
+  "totalReleased": 0,
+  "remaining": 999999999
+}
+```
+
+## WebSocket API
+
+### Real-time Updates
+
+Connect to WebSocket for real-time updates:
+
+```javascript
+const ws = new WebSocket('wss://api.xmbl.tokens/v1/ws');
+
+// Subscribe to intent updates
+ws.send(JSON.stringify({
+  type: 'subscribe',
+  channel: 'intents',
+  filters: { status: 'processing' }
+}));
+
+// Subscribe to price updates
+ws.send(JSON.stringify({
+  type: 'subscribe',
+  channel: 'prices',
+  filters: { feed: 'btc' }
+}));
+
+// Listen for updates
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Update:', data);
+};
+```
+
+### WebSocket Events
+
+#### Intent Updates
+```json
+{
+  "type": "intent_update",
+  "intentId": "intent_1_123_1640995200000",
+  "status": "completed",
+  "progress": {
+    "currentStep": "settlement",
+    "totalSteps": 3,
+    "completedSteps": 3
+  }
+}
+```
+
+#### Price Updates
+```json
+{
+  "type": "price_update",
+  "feed": "btc",
+  "price": 50000.25,
+  "timestamp": 1640995200000,
+  "confidence": 0.95
+}
+```
+
+#### Event Updates
+```json
+{
+  "type": "event_update",
+  "contractId": "contract_1_0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+  "event": {
+    "transactionHash": "0x...",
+    "eventName": "PriceUpdated",
+    "data": {...}
+  }
+}
+```
 
 ## Error Handling
 
-### Common Error Codes
+### Error Response Format
 
-**Contract Errors:**
-- `"No tokens to deactivate"`: Attempting to deactivate when no tokens minted
-- `"Settlement failed"`: Settlement verification failed
-- `"Activation queue is empty"`: No activations to process
-- `"Deposit amount must be greater than 0"`: Invalid deposit amount
+```json
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "Invalid request parameters",
+    "details": {
+      "field": "chainId",
+      "reason": "Must be a positive integer"
+    },
+    "timestamp": 1640995200000,
+    "requestId": "req_123"
+  }
+}
+```
 
-**Service Errors:**
-- `ECONNREFUSED`: Connection refused (MCP server not running)
-- `Network error`: Network connectivity issues
-- `Invalid parameters`: Invalid function parameters
-- `Timeout`: Request timeout
+### Error Codes
 
-### Error Handling Best Practices
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `INVALID_REQUEST` | 400 | Invalid request parameters |
+| `UNAUTHORIZED` | 401 | Invalid or missing API key |
+| `FORBIDDEN` | 403 | Insufficient permissions |
+| `NOT_FOUND` | 404 | Resource not found |
+| `RATE_LIMITED` | 429 | Rate limit exceeded |
+| `INTERNAL_ERROR` | 500 | Internal server error |
+| `SERVICE_UNAVAILABLE` | 503 | Service temporarily unavailable |
 
-1. **Always check return values**
-2. **Handle async errors with try/catch**
-3. **Implement retry logic for network calls**
-4. **Log errors for debugging**
-5. **Provide user-friendly error messages**
+## Rate Limiting
 
-## Rate Limits
+- **Free Tier**: 100 requests/minute
+- **Pro Tier**: 1000 requests/minute
+- **Enterprise**: Custom limits
 
-### API Rate Limits
+Rate limit headers:
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995800
+```
 
-**Pyth Hermes API:**
-- 100 requests per minute
-- Caching recommended
+## SDKs and Libraries
 
-**Blockscout API:**
-- 1000 requests per hour
-- Rate limiting implemented
+### JavaScript/TypeScript
 
-**MCP Server:**
-- 100 requests per minute
-- Connection pooling recommended
+```bash
+npm install @xmbl/sdk
+```
 
-### Best Practices
+```typescript
+import { XMBLClient } from '@xmbl/sdk';
 
-1. **Implement caching for price feeds**
-2. **Use batch operations where possible**
-3. **Implement exponential backoff**
-4. **Monitor rate limit usage**
-5. **Cache frequently accessed data**
+const client = new XMBLClient({
+  apiKey: 'your-api-key',
+  baseUrl: 'https://api.xmbl.tokens'
+});
 
-## Security Considerations
+// Create intent
+const intent = await client.intents.create({
+  chainId: 1,
+  depositId: 123,
+  user: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  amount: '1000000000000000000',
+  btcEquivalent: '0.001'
+});
 
-### API Security
+// Get BTC price
+const price = await client.prices.getBtcPrice();
 
-1. **Validate all inputs**
-2. **Use HTTPS for all API calls**
-3. **Implement authentication where required**
-4. **Rate limit API endpoints**
-5. **Log all API access**
+// Monitor events
+client.monitoring.on('event', (event) => {
+  console.log('New event:', event);
+});
+```
 
-### Smart Contract Security
+### Python
 
-1. **Use OpenZeppelin security patterns**
-2. **Implement access controls**
-3. **Prevent reentrancy attacks**
-4. **Validate all parameters**
-5. **Use secure random number generation**
+```bash
+pip install xmbl-sdk
+```
 
-### Data Security
+```python
+from xmbl import XMBLClient
 
-1. **Encrypt sensitive data**
-2. **Use secure key management**
-3. **Implement audit logging**
-4. **Regular security audits**
-5. **Monitor for anomalies**
+client = XMBLClient(api_key='your-api-key')
+
+# Create intent
+intent = client.intents.create(
+    chain_id=1,
+    deposit_id=123,
+    user='0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+    amount='1000000000000000000',
+    btc_equivalent='0.001'
+)
+
+# Get BTC price
+price = client.prices.get_btc_price()
+
+# Monitor events
+@client.monitoring.on_event
+def handle_event(event):
+    print(f'New event: {event}')
+```
+
+## Examples
+
+### Complete Activation Flow
+
+```typescript
+import { XMBLClient } from '@xmbl/sdk';
+
+const client = new XMBLClient({
+  apiKey: process.env.XMBL_API_KEY,
+  baseUrl: 'https://api.xmbl.tokens'
+});
+
+async function activateToken() {
+  try {
+    // 1. Get current BTC price
+    const btcPrice = await client.prices.getBtcPrice();
+    console.log('BTC Price:', btcPrice.price);
+    
+    // 2. Calculate BTC equivalent
+    const ethAmount = '1000000000000000000'; // 1 ETH
+    const btcEquivalent = (parseFloat(ethAmount) / 1e18) / btcPrice.price;
+    
+    // 3. Create cross-chain intent
+    const intent = await client.intents.create({
+      chainId: 1,
+      depositId: Date.now(),
+      user: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+      amount: ethAmount,
+      btcEquivalent: btcEquivalent.toString()
+    });
+    
+    console.log('Intent created:', intent.intentId);
+    
+    // 4. Monitor progress
+    const checkStatus = async () => {
+      const status = await client.intents.getStatus(intent.intentId);
+      console.log('Status:', status.status);
+      
+      if (status.status === 'completed') {
+        console.log('Token activated successfully!');
+        return;
+      }
+      
+      if (status.status === 'failed') {
+        console.error('Activation failed');
+        return;
+      }
+      
+      // Check again in 5 seconds
+      setTimeout(checkStatus, 5000);
+    };
+    
+    checkStatus();
+    
+  } catch (error) {
+    console.error('Activation failed:', error);
+  }
+}
+
+activateToken();
+```
+
+### Real-time Monitoring
+
+```typescript
+import { XMBLClient } from '@xmbl/sdk';
+
+const client = new XMBLClient({
+  apiKey: process.env.XMBL_API_KEY,
+  baseUrl: 'https://api.xmbl.tokens'
+});
+
+// Monitor all intents
+client.intents.on('update', (intent) => {
+  console.log(`Intent ${intent.intentId} status: ${intent.status}`);
+});
+
+// Monitor price changes
+client.prices.on('update', (price) => {
+  console.log(`BTC price: $${price.price}`);
+});
+
+// Monitor contract events
+client.monitoring.on('event', (event) => {
+  console.log(`New event: ${event.eventName}`, event.data);
+});
+
+// Start monitoring
+client.start();
+```
+
+## Support
+
+- **Documentation**: [Integration Guide](./INTEGRATION.md)
+- **Issues**: [GitHub Issues](https://github.com/your-org/xmbl-tokens/issues)
+- **Discord**: [XMBL Community](https://discord.gg/xmbl)
+- **Email**: api-support@xmbl.tokens

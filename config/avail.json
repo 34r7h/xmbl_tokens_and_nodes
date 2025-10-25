@@ -4,9 +4,10 @@
     "nexus": {
       "enabled": true,
       "rpcUrl": "https://nexus-rpc.avail.tools",
-      "apiKey": "YOUR_AVAIL_API_KEY",
+      "apiKey": "YOUR_AVAIL_NEXUS_API_KEY",
       "chainId": 202402021700,
-      "name": "Avail Nexus Testnet"
+      "name": "Avail Nexus Testnet",
+      "wsUrl": "wss://nexus-ws.avail.tools"
     },
     "intent": {
       "processing": {
@@ -33,7 +34,7 @@
       {
         "chainId": 137,
         "name": "Polygon",
-        "network": "mumbai", 
+        "network": "mumbai",
         "supported": true
       },
       {
@@ -86,8 +87,8 @@
       "address": "0x0000000000000000000000000000000000000000",
       "chainContracts": {
         "1": "0x0000000000000000000000000000000000000000",
-        "137": "0x0000000000000000000000000000000000000000",
         "97": "0x0000000000000000000000000000000000000000",
+        "137": "0x0000000000000000000000000000000000000000",
         "421614": "0x0000000000000000000000000000000000000000",
         "11155420": "0x0000000000000000000000000000000000000000"
       }

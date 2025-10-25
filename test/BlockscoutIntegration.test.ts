@@ -15,10 +15,10 @@ describe("Blockscout Integration", function () {
       "https://autoscout.example.com"
     );
     
-    mcpService = new BlockscoutMCPService(
-      "http://localhost:3000",
-      "test-api-key"
-    );
+    mcpService = new BlockscoutMCPService({
+      mcpServerUrl: "http://localhost:3000",
+      apiKey: "test-api-key"
+    });
     
     mcpApplication = new MCPApplication(mcpService);
   });

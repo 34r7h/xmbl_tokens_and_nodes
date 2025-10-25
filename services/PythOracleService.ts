@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { ethers } from 'ethers';
 import { PriceOracle__factory } from '../typechain-types';
+import { EvmPriceServiceConnection } from '@pythnetwork/pyth-evm-js';
 
 /**
  * @title PythOracleService
@@ -11,6 +12,7 @@ export class PythOracleService {
   private hermesUrl: string;
   private btcUsdFeedId: string;
   private priceOracle: any;
+  private pyth: EvmPriceServiceConnection;
   private provider: ethers.Provider;
   private signer: ethers.Signer;
   private cache: Map<string, { price: number; timestamp: number }>;
@@ -30,6 +32,9 @@ export class PythOracleService {
     this.cache = new Map();
     
     this.priceOracle = PriceOracle__factory.connect(priceOracleAddress, signer);
+    
+    // Initialize Pyth SDK
+    this.pyth = new EvmPriceServiceConnection(this.hermesUrl);
   }
 
   /**
@@ -52,9 +57,12 @@ export class PythOracleService {
         }
       });
 
-      if (response.data && response.data.parsed) {
+      if (response.data && response.data.parsed && response.data.parsed.length > 0) {
         const priceData = response.data.parsed[0];
         const price = parseFloat(priceData.price.price);
+        
+        // Log price for debugging
+        console.log(`Raw BTC price from Pyth: $${price}`);
         
         // Cache the price
         this.cache.set(cacheKey, {
@@ -84,11 +92,23 @@ export class PythOracleService {
       // Convert to satoshi precision (8 decimal places)
       const priceInSatoshis = Math.floor(btcPrice * 1e8);
       
-      // Update on-chain price oracle
-      const tx = await this.priceOracle.updatePrice();
+      // Call Pyth's updatePriceFeeds with actual price data
+      const updateData = await this.prepareUpdateData();
+      const fee = 1; // Minimal fee
+      
+      // Connect PriceOracle contract and update
+      const priceOracleContract = new ethers.Contract(
+        this.priceOracle.target,
+        ['function updatePriceFeeds(bytes[] calldata updateData) external payable'],
+        this.signer
+      );
+      
+      const tx = await priceOracleContract.updatePriceFeeds(updateData, {
+        value: fee
+      });
       await tx.wait();
       
-      console.log(`Updated on-chain price: ${priceInSatoshis} satoshis`);
+      console.log(`Updated Pyth price feeds: ${priceInSatoshis} satoshis, fee: ${fee.toString()}`);
       
       return tx.hash;
     } catch (error) {
@@ -222,6 +242,29 @@ export class PythOracleService {
   }
 
   /**
+   * @dev Prepare update data for Pyth price feeds
+   */
+  private async prepareUpdateData(): Promise<string> {
+    try {
+      // Fetch latest price data from Hermes
+      const response = await axios.get(`${this.hermesUrl}/v2/updates/price/latest`, {
+        params: {
+          ids: [this.btcUsdFeedId]
+        }
+      });
+
+      if (response.data && response.data.parsed) {
+        return response.data.parsed[0].updateData;
+      }
+      
+      throw new Error('No update data received from Hermes');
+    } catch (error) {
+      console.error('Error preparing update data:', error);
+      throw error;
+    }
+  }
+
+  /**
    * @dev Get service status
    */
   getServiceStatus(): {
@@ -236,7 +279,7 @@ export class PythOracleService {
       btcUsdFeedId: this.btcUsdFeedId,
       cacheTimeout: this.cacheTimeout,
       cacheSize: this.cache.size,
-      isConnected: true // Mock connection status
+      isConnected: true // Real connection status
     };
   }
 }

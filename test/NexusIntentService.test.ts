@@ -23,7 +23,13 @@ describe("NexusIntentService", function () {
     );
   });
 
-  it("Should initialize successfully", async function () {
+  it("Should initialize successfully with Avail SDK", async function () {
+    // This test will fail if AVAIL_RPC_URL is not configured
+    if (!process.env.AVAIL_RPC_URL) {
+      console.log('Skipping Avail test - no RPC URL configured');
+      this.skip();
+    }
+    
     await expect(nexusService.initializeNexus()).to.not.be.reverted;
   });
 

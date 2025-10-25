@@ -53,11 +53,11 @@ export class MCPApplication {
         analysis,
         recommendations: analysis.recommendations || []
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing query:', error);
       return {
         response: 'Sorry, I encountered an error processing your query.',
-        analysis: { error: error.message },
+        analysis: { error: error?.message || String(error) },
         recommendations: []
       };
     }
@@ -120,33 +120,57 @@ export class MCPApplication {
    * @dev Perform AI reasoning on blockchain data
    */
   private async performAIReasoning(query: string, data: any): Promise<any> {
-    // Mock AI reasoning - in production this would use actual AI/LLM
-    const analysis = {
-      query: query,
-      data: data,
-      insights: [],
-      anomalies: [],
-      recommendations: [],
-      confidence: 0.85
-    };
+    try {
+      // Use real MCP service for AI analysis
+      const mcpAnalysis = await this.mcpService.analyzeActivationSequence(
+        data.chainId || 1,
+        data.contractAddress || '',
+        data.timeRange || '24h'
+      );
 
-    // Analyze activation sequences
-    if (data.anomalies) {
-      analysis.anomalies = data.anomalies;
-      analysis.insights.push('Detected anomalies in activation sequence');
+      const analysis: any = {
+        query: query,
+        data: data,
+        insights: [],
+        anomalies: mcpAnalysis.anomalies || [],
+        recommendations: mcpAnalysis.recommendations || [],
+        confidence: 0.9 // Higher confidence with real MCP analysis
+      };
+
+      // Process MCP analysis results
+      const insights: string[] = [];
+      if (mcpAnalysis.anomalies && mcpAnalysis.anomalies.length > 0) {
+        insights.push('MCP analysis detected potential issues');
+        insights.push(mcpAnalysis.summary);
+      } else {
+        insights.push('No anomalies detected by MCP analysis');
+      }
+      analysis.insights = insights;
+
+      return analysis;
+    } catch (error: any) {
+      console.error('Error performing AI reasoning via MCP:', error);
+      
+      // Fallback to basic analysis if MCP fails
+      return {
+        query: query,
+        data: data,
+        insights: ['MCP analysis unavailable, using fallback reasoning'],
+        anomalies: [
+          {
+            type: 'mcp_error',
+            description: 'Unable to perform MCP analysis: ' + (error?.message || String(error)),
+            severity: 'warning'
+          }
+        ],
+        recommendations: [
+          'Check MCP server connectivity',
+          'Verify MCP service configuration',
+          'Review error logs for details'
+        ],
+        confidence: 0.3 // Lower confidence with fallback
+      };
     }
-
-    // Generate recommendations
-    if (data.anomalies && data.anomalies.length > 0) {
-      analysis.recommendations.push('Investigate anomalous activation patterns');
-      analysis.recommendations.push('Review settlement verification process');
-    }
-
-    if (data.summary) {
-      analysis.insights.push(data.summary);
-    }
-
-    return analysis;
   }
 
   /**

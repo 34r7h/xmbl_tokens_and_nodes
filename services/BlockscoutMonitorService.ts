@@ -87,8 +87,25 @@ export class BlockscoutMonitorService {
    */
   async pushToAutoscout(data: any): Promise<void> {
     try {
-      const response = await axios.post(`${this.autoscoutUrl}/api/events`, data);
-      console.log(`Pushed data to Autoscout: ${response.status}`);
+      // Skip API calls if URLs are not configured
+      if (!this.apiUrl || !this.autoscoutUrl) {
+        console.log(`Skipping API push - URLs not configured`);
+        return;
+      }
+      
+      // Push to Blockscout API for indexing
+      const blockscoutResponse = await axios.post(`${this.apiUrl}/api/v2/events`, {
+        chainId: data.chainId,
+        contractAddress: data.contractAddress,
+        events: data.events,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Push to Autoscout instance for monitoring
+      const autoscoutResponse = await axios.post(`${this.autoscoutUrl}/api/events`, data);
+      
+      console.log(`Pushed data to Blockscout: ${blockscoutResponse.status}`);
+      console.log(`Pushed data to Autoscout: ${autoscoutResponse.status}`);
     } catch (error) {
       console.error('Error pushing to Autoscout:', error);
       throw error;
@@ -109,9 +126,9 @@ export class BlockscoutMonitorService {
   }
 
   /**
-   * @dev Get contract events from Blockscout
+   * @dev Get contract events from Blockscout API
    */
-  async getContractEvents(contractAddress: string, chainId: number): Promise<any[]> {
+  async fetchContractEventsFromAPI(contractAddress: string, chainId: number): Promise<any[]> {
     try {
       const response = await axios.get(`${this.apiUrl}/v2/contracts/${contractAddress}/logs`, {
         params: {

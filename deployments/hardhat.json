@@ -1,0 +1,174 @@
+{
+  "network": "hardhat",
+  "contracts": {
+    "PriceOracle": {
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "transactionHash": "0x2b9558aaa7b483fee2aeaea4af9acd78ef5a93b1bb7a5e34e9c66ac04ac8cd3e",
+      "blockNumber": {
+        "_type": "Block",
+        "baseFeePerGas": "875000000",
+        "difficulty": "0",
+        "extraData": "0x",
+        "gasLimit": "30000000",
+        "gasUsed": "794228",
+        "blobGasUsed": null,
+        "excessBlobGas": null,
+        "hash": "0x84f9eca0c0c91fb45b7023234f1dd19c98fba80e9df1faebe4c7a0ad264aa8e1",
+        "miner": "0xC014BA5EC014ba5ec014Ba5EC014ba5Ec014bA5E",
+        "prevRandao": null,
+        "nonce": "0x0000000000000000",
+        "number": 1,
+        "parentHash": "0xe2b1c94ee9230c222858b77ba8ed4becb595fec4be6cc29d6f3fc2f08c897f70",
+        "timestamp": 1761155763,
+        "transactions": [
+          "0x2b9558aaa7b483fee2aeaea4af9acd78ef5a93b1bb7a5e34e9c66ac04ac8cd3e"
+        ]
+      }
+    },
+    "DepositManager": {
+      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "transactionHash": "0x272042c37c24c6256d11ed07e469cb7ee4e066e366d74b9dd452badb3507f3a7",
+      "blockNumber": {
+        "_type": "Block",
+        "baseFeePerGas": "771416246",
+        "difficulty": "0",
+        "extraData": "0x",
+        "gasLimit": "30000000",
+        "gasUsed": "1245126",
+        "blobGasUsed": null,
+        "excessBlobGas": null,
+        "hash": "0xa6f8dc29b1649f71caaa3a551b4fd603df91d65657f443d7fbe85b9e6b85ee27",
+        "miner": "0xC014BA5EC014ba5ec014Ba5EC014ba5Ec014bA5E",
+        "prevRandao": null,
+        "nonce": "0x0000000000000000",
+        "number": 2,
+        "parentHash": "0x84f9eca0c0c91fb45b7023234f1dd19c98fba80e9df1faebe4c7a0ad264aa8e1",
+        "timestamp": 1761155764,
+        "transactions": [
+          "0x272042c37c24c6256d11ed07e469cb7ee4e066e366d74b9dd452badb3507f3a7"
+        ]
+      }
+    },
+    "ChainDepositContract_Ethereum": {
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "transactionHash": "0xbc419273d7d064717fdd44bd4021a907e6bb57be05af5171b410e54ae5af59ab",
+      "blockNumber": {
+        "_type": "Block",
+        "baseFeePerGas": "682993469",
+        "difficulty": "0",
+        "extraData": "0x",
+        "gasLimit": "30000000",
+        "gasUsed": "1392413",
+        "blobGasUsed": null,
+        "excessBlobGas": null,
+        "hash": "0x11711ed451b2ea4afe51ba925690d7e59fead9943755a86248c6b20f0551ab47",
+        "miner": "0xC014BA5EC014ba5ec014Ba5EC014ba5Ec014bA5E",
+        "prevRandao": null,
+        "nonce": "0x0000000000000000",
+        "number": 3,
+        "parentHash": "0xa6f8dc29b1649f71caaa3a551b4fd603df91d65657f443d7fbe85b9e6b85ee27",
+        "timestamp": 1761155765,
+        "transactions": [
+          "0xbc419273d7d064717fdd44bd4021a907e6bb57be05af5171b410e54ae5af59ab"
+        ]
+      }
+    },
+    "ChainDepositContract_Polygon": {
+      "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "transactionHash": "0xe896b85399314855a3e34f944e9dce3b39817145f6a0cfac515faa08d3f37568",
+      "blockNumber": {
+        "_type": "Block",
+        "baseFeePerGas": "605544361",
+        "difficulty": "0",
+        "extraData": "0x",
+        "gasLimit": "30000000",
+        "gasUsed": "1392413",
+        "blobGasUsed": null,
+        "excessBlobGas": null,
+        "hash": "0x57ed90a21b0f4258f6657e4c458f16176f9d101c57d39983bab74d31e24d9709",
+        "miner": "0xC014BA5EC014ba5ec014Ba5EC014ba5Ec014bA5E",
+        "prevRandao": null,
+        "nonce": "0x0000000000000000",
+        "number": 4,
+        "parentHash": "0x11711ed451b2ea4afe51ba925690d7e59fead9943755a86248c6b20f0551ab47",
+        "timestamp": 1761155766,
+        "transactions": [
+          "0xe896b85399314855a3e34f944e9dce3b39817145f6a0cfac515faa08d3f37568"
+        ]
+      }
+    },
+    "ChainDepositContract_BSC": {
+      "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      "transactionHash": "0x9797fb4903fad2dd38bc7f474acfd1df97fab1fa4896af28b190168fac1658ab",
+      "blockNumber": {
+        "_type": "Block",
+        "baseFeePerGas": "536877715",
+        "difficulty": "0",
+        "extraData": "0x",
+        "gasLimit": "30000000",
+        "gasUsed": "1392413",
+        "blobGasUsed": null,
+        "excessBlobGas": null,
+        "hash": "0xb791870bf1e30ecaf8f56dc28b0435549677ce54399318bc66068566f56e6252",
+        "miner": "0xC014BA5EC014ba5ec014Ba5EC014ba5Ec014bA5E",
+        "prevRandao": null,
+        "nonce": "0x0000000000000000",
+        "number": 5,
+        "parentHash": "0x57ed90a21b0f4258f6657e4c458f16176f9d101c57d39983bab74d31e24d9709",
+        "timestamp": 1761155767,
+        "transactions": [
+          "0x9797fb4903fad2dd38bc7f474acfd1df97fab1fa4896af28b190168fac1658ab"
+        ]
+      }
+    },
+    "ChainDepositContract_Arbitrum": {
+      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+      "transactionHash": "0xf6b50ed09c743a2c998a823dd202ae10ba473a97490cb8d34eb33bf9dfeb8aa1",
+      "blockNumber": {
+        "_type": "Block",
+        "baseFeePerGas": "475997630",
+        "difficulty": "0",
+        "extraData": "0x",
+        "gasLimit": "30000000",
+        "gasUsed": "1392413",
+        "blobGasUsed": null,
+        "excessBlobGas": null,
+        "hash": "0x8f98b5ed3fb61ccc1a286a854f512e6b7df02309581f74acc8ab7fd442456e75",
+        "miner": "0xC014BA5EC014ba5ec014Ba5EC014ba5Ec014bA5E",
+        "prevRandao": null,
+        "nonce": "0x0000000000000000",
+        "number": 6,
+        "parentHash": "0xb791870bf1e30ecaf8f56dc28b0435549677ce54399318bc66068566f56e6252",
+        "timestamp": 1761155768,
+        "transactions": [
+          "0xf6b50ed09c743a2c998a823dd202ae10ba473a97490cb8d34eb33bf9dfeb8aa1"
+        ]
+      }
+    },
+    "ChainDepositContract_Optimism": {
+      "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+      "transactionHash": "0x744d97c0ffe40fedc35f9e24c7b9194d316a4771f242748e4ff8f8b43866fbc4",
+      "blockNumber": {
+        "_type": "Block",
+        "baseFeePerGas": "422021137",
+        "difficulty": "0",
+        "extraData": "0x",
+        "gasLimit": "30000000",
+        "gasUsed": "1392413",
+        "blobGasUsed": null,
+        "excessBlobGas": null,
+        "hash": "0xe6a9ad28cb51b3ee77fd7ddfc288126cf098c4a5749e37c6d766f235917a3a3f",
+        "miner": "0xC014BA5EC014ba5ec014Ba5EC014ba5Ec014bA5E",
+        "prevRandao": null,
+        "nonce": "0x0000000000000000",
+        "number": 7,
+        "parentHash": "0x8f98b5ed3fb61ccc1a286a854f512e6b7df02309581f74acc8ab7fd442456e75",
+        "timestamp": 1761155769,
+        "transactions": [
+          "0x744d97c0ffe40fedc35f9e24c7b9194d316a4771f242748e4ff8f8b43866fbc4"
+        ]
+      }
+    }
+  },
+  "timestamp": 1761155763168
+}

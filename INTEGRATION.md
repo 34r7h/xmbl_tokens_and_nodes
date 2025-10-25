@@ -1,262 +1,317 @@
-# XMBL Token Integration Guide
+# XMBL Integration Guide
 
 ## Overview
 
-This document provides comprehensive integration guidance for the XMBL token activation platform, covering smart contracts, services, CLI tools, and partner technology integrations.
+The XMBL E2E Cross-Chain Token Activation Platform provides a comprehensive solution for cross-chain token activation using Avail Nexus SDK, Pyth Network oracles, and Blockscout monitoring. This guide covers the technical integration details for developers.
 
 ## Architecture
 
-### System Components
-
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Smart         │    │   Backend       │    │   Partner       │
-│   Contracts     │    │   Services      │    │   Integrations  │
-├─────────────────┤    ├─────────────────┤    ├─────────────────┤
-│ • PriceOracle   │    │ • NexusIntent   │    │ • Avail Nexus   │
-│ • DepositMgr    │    │ • PythOracle    │    │ • Pyth Network  │
-│ • ChainDeposit  │    │ • Blockscout    │    │ • Blockscout    │
-└─────────────────┘    │ • MCP           │    └─────────────────┘
-                       └─────────────────┘
+│   User Deposit  │    │  Avail Nexus    │    │  Pyth Oracle    │
+│   (Any Chain)    │───▶│     SDK         │───▶│   (BTC Price)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ ChainDeposit    │    │ DepositManager  │    │ PriceOracle     │
+│ Contract        │    │ (Central)       │    │ (Tokenomics)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Blockscout      │    │ MCP Server      │    │ AI Analytics    │
+│ Monitoring      │    │ (Transparency)   │    │ (Auditing)      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### Technology Stack
+## Quick Start
 
-- **Smart Contracts**: Solidity 0.8.x, OpenZeppelin, Pyth SDK
-- **Backend**: TypeScript, Node.js, Ethers.js v6
-- **Testing**: Hardhat, Chai, Mocha
-- **Partner APIs**: Avail Nexus, Pyth Hermes, Blockscout MCP
+### 1. Installation
 
-## Smart Contracts
-
-### 1. PriceOracle.sol
-
-**Purpose**: Implements XMBL token economics with Pyth oracle integration
-
-**Key Features:**
-- Golden ratio price calculation: `x / (Phi * y)`
-- Pyth Network integration for BTC price feeds
-- Network fee calculation (3%)
-- Settlement verification
-
-**Deployment:**
 ```bash
+# Clone the repository
+git clone https://github.com/your-org/xmbl-tokens.git
+cd xmbl-tokens
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp env.example .env
+```
+
+### 2. Environment Configuration
+
+```bash
+# .env file
+# Avail Nexus SDK
+AVAIL_RPC_URL=https://nexus-rpc.avail.tools
+AVAIL_WS_URL=wss://nexus-ws.avail.tools
+
+# Pyth Network
+PYTH_HERMES_URL=https://hermes.pyth.network
+PYTH_BTC_USD_FEED_ID=0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43
+
+# Blockscout
+BLOCKSCOUT_MCP_SERVER_URL=http://localhost:3000
+BLOCKSCOUT_API_KEY=your-api-key
+
+# Network Configuration
+HARDHAT_NETWORK=hardhat
+PRIVATE_KEY=your-private-key
+```
+
+### 3. Deployment
+
+```bash
+# Deploy contracts
 npm run deploy
+
+# Set up monitoring
+npm run setup-autoscout
+
+# Start services
+npm run start
 ```
 
-**Key Functions:**
+## Core Components
+
+### Smart Contracts
+
+#### DepositManager.sol
+Central consolidation contract that receives deposits from multiple chains.
+
 ```solidity
-function calculatePrice(uint256 _tokensMinted) public pure returns (uint256)
-function activateToken() external
-function deactivateToken() external
-function calculateNetworkFee(uint256 amount) public pure returns (uint256)
+contract DepositManager {
+    function createDeposit(
+        uint256 chainId,
+        address user,
+        uint256 amount,
+        uint256 btcEquivalent
+    ) external returns (uint256 depositId);
+    
+    function settleActivation(
+        uint256 depositId,
+        bool settlementSuccess
+    ) external;
+}
 ```
 
-### 2. DepositManager.sol
+#### ChainDepositContract.sol
+Per-chain contract that accepts user deposits and creates cross-chain intents.
 
-**Purpose**: Central contract for managing cross-chain deposits and sequential activations
-
-**Key Features:**
-- Cross-chain deposit management
-- Sequential activation queue
-- Settlement processing
-- BTC pool integration
-
-**Key Functions:**
 ```solidity
-function receiveDeposit(address _user, uint256 _amount, uint256 _btcEquivalent) external returns (uint256)
-function processNextActivation() external onlyOwner
-function getActivationQueueLength() external view returns (uint256)
+contract ChainDepositContract {
+    function deposit(
+        address token,
+        uint256 amount
+    ) external returns (uint256 intentId);
+}
 ```
 
-### 3. ChainDepositContract.sol
+#### PriceOracle.sol
+Implements XMBL tokenomics with Pyth oracle integration.
 
-**Purpose**: Deployed on individual chains to accept user deposits and create cross-chain intents
-
-**Key Features:**
-- Multi-chain support
-- ERC20 and native currency deposits
-- BTC equivalent calculation
-- Intent creation
-
-**Key Functions:**
 ```solidity
-function deposit(address token, uint256 amount) external payable
-function createIntent(uint256 depositId) external onlyOwner returns (uint256)
-function calculateBtcEquivalent(address token, uint256 amount) public returns (uint256)
+contract PriceOracle {
+    function activateToken() external;
+    function calculatePrice(uint256 tokensMinted) external pure returns (uint256);
+    function getBtcPrice() external view returns (uint256);
+}
 ```
 
-## Backend Services
+### Backend Services
 
-### 1. NexusIntentService
+#### NexusIntentService
+Manages cross-chain intents using Avail Nexus SDK.
 
-**Purpose**: Manages cross-chain intents using Avail Nexus SDK
-
-**Features:**
-- Sequential intent processing
-- Bridge & Execute pattern
-- Settlement verification
-- Queue management
-
-**Usage:**
 ```typescript
-const nexusService = new NexusIntentService(provider, depositManagerAddress, chainContracts);
+import { NexusIntentService } from './services/NexusIntentService';
+
+const nexusService = new NexusIntentService(
+  provider,
+  signer,
+  depositManagerAddress,
+  chainContracts,
+  { network: 'testnet' }
+);
+
 await nexusService.initializeNexus();
-const intentId = await nexusService.createIntent(chainId, depositId, user, amount, btcEquivalent);
+const intentId = await nexusService.createIntent(
+  chainId,
+  depositId,
+  user,
+  amount,
+  btcEquivalent
+);
 ```
 
-### 2. PythOracleService
+#### PythOracleService
+Integrates Pyth Network for real-time price feeds.
 
-**Purpose**: Fetches real-time BTC price feeds from Pyth Network
-
-**Features:**
-- Hermes API integration
-- Price caching
-- On-chain updates
-- Periodic monitoring
-
-**Usage:**
 ```typescript
-const pythOracle = new PythOracleService(provider, priceOracleAddress, hermesUrl, btcUsdPriceId);
-const btcPrice = await pythOracle.fetchBtcPrice();
-await pythOracle.updatePriceFeeds();
+import { PythOracleService } from './services/PythOracleService';
+
+const pythService = new PythOracleService(
+  hermesUrl,
+  btcUsdFeedId,
+  priceOracleAddress,
+  provider,
+  signer
+);
+
+const btcPrice = await pythService.fetchBtcPrice();
+await pythService.updatePriceFeeds();
 ```
 
-### 3. BlockscoutMonitorService
+#### BlockscoutMonitorService
+Monitors blockchain events and provides transparency.
 
-**Purpose**: Monitors blockchain events and provides transparency
-
-**Features:**
-- Event indexing
-- Contract monitoring
-- Data export
-- Autoscout integration
-
-**Usage:**
 ```typescript
-const blockscoutMonitor = new BlockscoutMonitorService(provider);
-blockscoutMonitor.addContract(chainId, contractAddress, abi);
-const events = await blockscoutMonitor.indexEvents(chainId, contractAddress);
+import { BlockscoutMonitorService } from './services/BlockscoutMonitorService';
+
+const monitorService = new BlockscoutMonitorService(
+  apiUrl,
+  rpcUrl,
+  autoscoutUrl
+);
+
+monitorService.addContract(chainId, contractAddress, contractName);
+const events = await monitorService.indexEvents(chainId, contractAddress);
 ```
 
-### 4. BlockscoutMCPService
+## API Reference
 
-**Purpose**: Integrates with Blockscout Model Context Protocol for AI analysis
+### CLI Commands
 
-**Features:**
-- MCP server integration
-- AI-powered auditing
-- Conversational analytics
-- Security analysis
+```bash
+# Deployment
+npm run deploy                    # Deploy all contracts
+npm run deploy:production         # Deploy to production networks
 
-**Usage:**
+# Monitoring
+npm run monitor                   # Real-time monitoring
+npm run setup-autoscout          # Set up Blockscout explorer
+npm run fetch-prices             # Query current prices
+
+# Testing
+npm run test                      # Run all tests
+npm run test:integration         # Run integration tests
+npm run test:e2e                 # Run end-to-end tests
+
+# Utilities
+npm run activate                  # Manual token activation
+npm run export-records           # Export transaction records
+npm run verify-testnet           # Verify testnet deployments
+```
+
+### Service APIs
+
+#### NexusIntentService
+
 ```typescript
-const mcpService = new BlockscoutMCPService({ apiKey, mcpServerUrl });
-const tools = await mcpService.getAvailableTools();
-const analysis = await mcpService.analyzeActivationSequence(chainId, contractAddress, timeRange);
+class NexusIntentService {
+  // Initialize the service
+  async initializeNexus(): Promise<void>
+  
+  // Create cross-chain intent
+  async createIntent(
+    chainId: number,
+    depositId: number,
+    user: string,
+    amount: string,
+    btcEquivalent: string
+  ): Promise<string>
+  
+  // Get intent status
+  getIntentStatus(intentId: string): any
+  
+  // Get all intents
+  getAllIntents(): any[]
+}
 ```
 
-## CLI Tools
+#### PythOracleService
 
-### Deployment Scripts
-
-**Deploy Contracts:**
-```bash
-npm run deploy
+```typescript
+class PythOracleService {
+  // Fetch BTC price from Hermes
+  async fetchBtcPrice(): Promise<number>
+  
+  // Update price feeds on-chain
+  async updatePriceFeeds(): Promise<string>
+  
+  // Get current BTC price
+  async getCurrentBtcPrice(): Promise<number>
+  
+  // Start periodic updates
+  startPeriodicUpdates(intervalMs: number): void
+}
 ```
 
-**Activate Tokens:**
-```bash
-npm run activate <user_address> <amount> <token_address> <chain_id>
-```
+#### BlockscoutMonitorService
 
-**Monitor System:**
-```bash
-npm run monitor [start|events|prices|status|export]
-```
-
-**Fetch Prices:**
-```bash
-npm run fetch-prices [current|history|update|status]
-```
-
-**Verify Sequences:**
-```bash
-npm run verify-sequence [verify|audit|analyze|report] [contract_address] [time_range]
-```
-
-**Export Records:**
-```bash
-npm run export-records [json|csv] [output_dir]
-```
-
-**Setup Autoscout:**
-```bash
-npm run setup-autoscout [setup|configure|test|start]
-```
-
-**Test Flow:**
-```bash
-npm run test-flow [full|intent|price|monitor|ai] [num_users]
+```typescript
+class BlockscoutMonitorService {
+  // Add contract to monitoring
+  addContract(chainId: number, address: string, name: string): void
+  
+  // Index events for contract
+  async indexEvents(chainId: number, address: string): Promise<number>
+  
+  // Export events
+  exportEvents(chainId: number, address: string): any[]
+  
+  // Clear events
+  clearEvents(chainId: number, address: string): void
+}
 ```
 
 ## Configuration
 
-### Environment Variables
+### Chain Configuration
 
-Create `.env` file:
-```bash
-# Private key for deployment
-PRIVATE_KEY=your_private_key_here
-
-# RPC URLs for testnets
-SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
-MUMBAI_RPC_URL=https://polygon-mumbai.infura.io/v3/YOUR_KEY
-BSC_TESTNET_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
-ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
-OPTIMISM_SEPOLIA_RPC_URL=https://sepolia.optimism.io
-
-# Pyth Network Configuration
-PYTH_HERMES_URL=https://hermes.pyth.network
-PYTH_BTC_USD_FEED_ID=0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43
-
-# Blockscout Configuration
-BLOCKSCOUT_API_URL=https://eth-sepolia.blockscout.com/api
-BLOCKSCOUT_MCP_SERVER_URL=http://localhost:3000
-
-# Avail Nexus Configuration
-AVAIL_NEXUS_NETWORK=testnet
-AVAIL_NEXUS_RPC_URL=https://nexus-rpc.avail.tools
-
-# BTC Pool Address
-BTC_POOL_ADDRESS=your_btc_pool_address_here
-```
-
-### Configuration Files
-
-**Chains Configuration** (`config/chains.json`):
 ```json
+// config/chains.json
 {
   "networks": {
     "ethereum": {
       "name": "Ethereum",
       "chainId": 1,
-      "network": "sepolia",
-      "rpcUrl": "https://sepolia.infura.io/v3/YOUR_KEY"
+      "rpcUrl": "https://sepolia.infura.io/v3/YOUR_KEY",
+      "explorer": "https://sepolia.etherscan.io",
+      "supported": true,
+      "testnet": true
     }
   }
 }
 ```
 
-**Contracts Configuration** (`config/contracts.json`):
+### Contract Configuration
+
 ```json
+// config/contracts.json
 {
-  "contracts": {
-    "PriceOracle": {
-      "name": "PriceOracle",
-      "description": "Implements XMBL token economics"
-    }
+  "PriceOracle": {
+    "address": "0x...",
+    "abi": "PriceOracle.json"
+  },
+  "DepositManager": {
+    "address": "0x...",
+    "abi": "DepositManager.json"
   }
+}
+```
+
+### Pyth Configuration
+
+```json
+// config/pyth.json
+{
+  "hermesUrl": "https://hermes.pyth.network",
+  "btcUsdFeedId": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+  "updateInterval": 30000
 }
 ```
 
@@ -264,219 +319,167 @@ BTC_POOL_ADDRESS=your_btc_pool_address_here
 
 ### Unit Tests
 
-**Run All Tests:**
 ```bash
+# Run all tests
 npm test
+
+# Run specific test suites
+npm run test:integration
+npm run test:mock
+npm run test:e2e
 ```
 
-**Run Specific Tests:**
-```bash
-npx hardhat test test/PriceOracle.test.ts
-npx hardhat test test/NexusIntentService.test.ts
-npx hardhat test test/PythOracleService.test.ts
-npx hardhat test test/BlockscoutIntegration.test.ts
-```
+### Integration Testing
 
-### Integration Tests
-
-**Test Full Flow:**
-```bash
-npm run test-flow full 5
-```
-
-**Test Specific Components:**
-```bash
-npm run test-flow intent 3
-npm run test-flow price
-npm run test-flow monitor
-npm run test-flow ai
+```typescript
+// Example integration test
+describe('Cross-Chain Activation Flow', () => {
+  it('should process deposit and activate token', async () => {
+    // 1. Create deposit on source chain
+    const depositTx = await chainContract.deposit(token, amount);
+    await depositTx.wait();
+    
+    // 2. Create cross-chain intent
+    const intentId = await nexusService.createIntent(
+      chainId,
+      depositId,
+      user,
+      amount,
+      btcEquivalent
+    );
+    
+    // 3. Verify intent processing
+    const intent = nexusService.getIntentStatus(intentId);
+    expect(intent.status).to.equal('processing');
+    
+    // 4. Wait for settlement
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    
+    // 5. Verify completion
+    const finalIntent = nexusService.getIntentStatus(intentId);
+    expect(finalIntent.status).to.equal('completed');
+  });
+});
 ```
 
 ## Deployment
 
-### 1. Local Development
+### Local Development
 
-**Install Dependencies:**
 ```bash
-npm install
-```
+# Start local blockchain
+npx hardhat node
 
-**Compile Contracts:**
-```bash
-npm run build
-```
-
-**Run Tests:**
-```bash
-npm test
-```
-
-### 2. Testnet Deployment
-
-**Deploy to Sepolia:**
-```bash
-npx hardhat run scripts/deploy.ts --network sepolia
-```
-
-**Deploy to Mumbai:**
-```bash
-npx hardhat run scripts/deploy.ts --network mumbai
-```
-
-**Deploy to BSC Testnet:**
-```bash
-npx hardhat run scripts/deploy.ts --network bscTestnet
-```
-
-### 3. Production Deployment
-
-**Configure Environment:**
-- Set production RPC URLs
-- Configure API keys
-- Set up monitoring
-- Enable security features
-
-**Deploy Contracts:**
-```bash
+# Deploy contracts
 npm run deploy
-```
 
-**Verify Contracts:**
-```bash
-npm run verify
-```
-
-## Monitoring and Maintenance
-
-### Monitoring Setup
-
-**Start Monitoring:**
-```bash
-npm run monitor start
-```
-
-**Check Status:**
-```bash
-npm run monitor status
-```
-
-**Export Data:**
-```bash
-npm run export-records json exports/
-```
-
-### Autoscout Setup
-
-**Initial Setup:**
-```bash
-npm run setup-autoscout setup
-```
-
-**Configure Settings:**
-```bash
-npm run setup-autoscout configure
-```
-
-**Test Functionality:**
-```bash
-npm run setup-autoscout test
-```
-
-**Start Services:**
-```bash
+# Start monitoring
 npm run setup-autoscout start
 ```
+
+### Testnet Deployment
+
+```bash
+# Deploy to testnet
+HARDHAT_NETWORK=sepolia npm run deploy
+
+# Verify deployment
+npm run verify-testnet
+```
+
+### Production Deployment
+
+```bash
+# Deploy to production
+npm run deploy:production
+
+# Health check
+npm run health:check
+```
+
+## Monitoring and Analytics
+
+### Real-time Monitoring
+
+```bash
+# Start monitoring dashboard
+npm run dashboard
+
+# Monitor specific contracts
+npm run monitor -- --contracts PriceOracle,DepositManager
+```
+
+### AI Analytics
+
+```typescript
+// Use MCP application for AI analysis
+const mcpApp = new MCPApplication(mcpService);
+
+const result = await mcpApp.processQuery(
+  'Analyze the activation sequence for anomalies'
+);
+
+console.log(result.response);
+console.log(result.recommendations);
+```
+
+## Security Considerations
+
+1. **Access Control**: All contracts implement proper access control
+2. **Reentrancy Protection**: Uses OpenZeppelin's ReentrancyGuard
+3. **Price Oracle Security**: Multiple price feed validation
+4. **Cross-chain Security**: Intent verification and settlement checks
+5. **Monitoring**: Real-time anomaly detection
 
 ## Troubleshooting
 
 ### Common Issues
 
-**1. Contract Deployment Fails**
-- Check RPC URL configuration
-- Verify private key format
-- Ensure sufficient gas
+1. **Nexus SDK Initialization Failed**
+   ```bash
+   # Check environment variables
+   echo $AVAIL_RPC_URL
+   echo $AVAIL_WS_URL
+   
+   # Verify network connectivity
+   curl -X POST $AVAIL_RPC_URL -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+   ```
 
-**2. Price Feeds Not Working**
-- Verify Pyth Hermes URL
-- Check BTC/USD feed ID
-- Test network connectivity
+2. **Pyth Price Feed Issues**
+   ```bash
+   # Check Hermes API
+   curl $PYTH_HERMES_URL/v2/updates/price/latest?ids[]=$PYTH_BTC_USD_FEED_ID
+   
+   # Verify feed ID
+   npm run fetch-prices
+   ```
 
-**3. Monitoring Issues**
-- Check Blockscout API URL
-- Verify MCP server connection
-- Review error logs
+3. **Blockscout Connection Issues**
+   ```bash
+   # Test MCP server
+   curl $BLOCKSCOUT_MCP_SERVER_URL/health
+   
+   # Check API key
+   npm run get-api-keys
+   ```
 
-### Debug Commands
+### Debug Mode
 
-**Check Deployment Status:**
 ```bash
-npm run monitor status
+# Enable debug logging
+DEBUG=xmbl:* npm run monitor
+
+# Verbose output
+npm run test -- --verbose
 ```
 
-**Test Price Feeds:**
-```bash
-npm run fetch-prices status
-```
+## Support
 
-**Verify Sequences:**
-```bash
-npm run verify-sequence verify
-```
+- **Documentation**: [API.md](./API.md)
+- **Issues**: [GitHub Issues](https://github.com/your-org/xmbl-tokens/issues)
+- **Discord**: [XMBL Community](https://discord.gg/xmbl)
+- **Email**: support@xmbl.tokens
 
-## Security Considerations
+## License
 
-### Smart Contract Security
-
-- **Access Controls**: Only owner can process activations
-- **Reentrancy Protection**: ReentrancyGuard on deposit functions
-- **Price Manipulation**: Sequential processing prevents MEV attacks
-- **Settlement Verification**: All activations verified before processing
-
-### Backend Security
-
-- **API Key Management**: Secure storage of API keys
-- **Rate Limiting**: Prevent abuse of services
-- **Input Validation**: Validate all user inputs
-- **Error Handling**: Secure error messages
-
-### Monitoring Security
-
-- **Audit Logging**: Log all critical operations
-- **Anomaly Detection**: AI-powered security analysis
-- **Transparency**: Public monitoring dashboard
-- **Alert System**: Real-time security alerts
-
-## Performance Optimization
-
-### Smart Contract Optimization
-
-- **Gas Efficiency**: Optimized contract code
-- **Batch Operations**: Process multiple activations
-- **Storage Optimization**: Efficient data structures
-
-### Backend Optimization
-
-- **Caching**: Price feed caching
-- **Async Processing**: Non-blocking operations
-- **Queue Management**: Efficient intent processing
-- **Database Optimization**: Indexed queries
-
-## Support and Resources
-
-### Documentation
-
-- **API Documentation**: `API.md`
-- **Integration Guide**: `INTEGRATION.md`
-- **Avail Feedback**: `AVAIL_FEEDBACK.md`
-
-### Community
-
-- **GitHub Issues**: Report bugs and feature requests
-- **Discord**: Community support and discussions
-- **Telegram**: Real-time support
-
-### Professional Support
-
-- **Enterprise Support**: Available for production deployments
-- **Custom Integration**: Tailored solutions
-- **Security Audits**: Professional security reviews
+MIT License - see [LICENSE](./LICENSE) for details.

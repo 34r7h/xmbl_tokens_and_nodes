@@ -43,11 +43,13 @@ async function main() {
     console.log('\n1. Deploying PriceOracle...');
     const PriceOracleFactory = await ethers.getContractFactory('PriceOracle');
     
-    // Mock Pyth address and BTC/USD price feed ID for testnets
-    const mockPythAddress = '0x0000000000000000000000000000000000000000';
-    const mockBtcUsdPriceId = '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43';
+    // Real Pyth Network addresses for production
+    const pythAddress = network === 'localhost' 
+      ? '0x0000000000000000000000000000000000000000' // Mock for localhost
+      : '0x4305fb66699c3b2702d4d05cf1b4fc5ec882e73f'; // Real Pyth on Ethereum Sepolia
+    const btcUsdPriceId = '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43';
     
-    const priceOracle = await PriceOracleFactory.deploy(mockPythAddress, mockBtcUsdPriceId);
+    const priceOracle = await PriceOracleFactory.deploy(pythAddress, btcUsdPriceId);
     await priceOracle.waitForDeployment();
     const priceOracleAddress = await priceOracle.getAddress();
     const priceOracleTx = priceOracle.deploymentTransaction();
@@ -55,18 +57,19 @@ async function main() {
     console.log(`PriceOracle deployed to: ${priceOracleAddress}`);
     console.log(`Transaction hash: ${priceOracleTx?.hash}`);
     
+    const priceOracleBlockNumber = priceOracleTx ? await ethers.provider.getBlockNumber() : 0;
+    
     deploymentConfig.contracts.PriceOracle = {
       address: priceOracleAddress,
       transactionHash: priceOracleTx?.hash || '',
-      blockNumber: await priceOracleTx?.getBlock() || 0
+      blockNumber: priceOracleBlockNumber
     };
 
     // 2. Deploy DepositManager
     console.log('\n2. Deploying DepositManager...');
     const DepositManagerFactory = await ethers.getContractFactory('DepositManager');
-    const btcPoolAddress = process.env.BTC_POOL_ADDRESS || deployer.address; // Use deployer as mock BTC pool
     
-    const depositManager = await DepositManagerFactory.deploy(priceOracleAddress, btcPoolAddress);
+    const depositManager = await DepositManagerFactory.deploy(priceOracleAddress);
     await depositManager.waitForDeployment();
     const depositManagerAddress = await depositManager.getAddress();
     const depositManagerTx = depositManager.deploymentTransaction();
@@ -74,10 +77,12 @@ async function main() {
     console.log(`DepositManager deployed to: ${depositManagerAddress}`);
     console.log(`Transaction hash: ${depositManagerTx?.hash}`);
     
+    const depositManagerBlockNumber = depositManagerTx ? await ethers.provider.getBlockNumber() : 0;
+    
     deploymentConfig.contracts.DepositManager = {
       address: depositManagerAddress,
       transactionHash: depositManagerTx?.hash || '',
-      blockNumber: await depositManagerTx?.getBlock() || 0
+      blockNumber: depositManagerBlockNumber
     };
 
     // 3. Deploy ChainDepositContract for each supported chain
@@ -106,10 +111,12 @@ async function main() {
       console.log(`ChainDepositContract for ${chain.name} deployed to: ${chainDepositAddress}`);
       console.log(`Transaction hash: ${chainDepositTx?.hash}`);
       
+      const chainDepositBlockNumber = chainDepositTx ? await ethers.provider.getBlockNumber() : 0;
+      
       deploymentConfig.contracts[`ChainDepositContract_${chain.name}`] = {
         address: chainDepositAddress,
         transactionHash: chainDepositTx?.hash || '',
-        blockNumber: await chainDepositTx?.getBlock() || 0
+        blockNumber: chainDepositBlockNumber
       };
     }
 
@@ -133,7 +140,7 @@ async function main() {
     console.log(`# Add these to your .env file for ${network}:`);
     console.log(`PRICE_ORACLE_ADDRESS=${priceOracleAddress}`);
     console.log(`DEPOSIT_MANAGER_ADDRESS=${depositManagerAddress}`);
-    console.log(`BTC_POOL_ADDRESS=${btcPoolAddress}`);
+    console.log(`BTC_POOL_ADDRESS=${deployer.address}`);
     console.log(`# Chain-specific contract addresses:`);
     for (const chain of supportedChains) {
       const contractName = `ChainDepositContract_${chain.name}`;

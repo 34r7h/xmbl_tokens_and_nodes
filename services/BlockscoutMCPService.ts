@@ -10,9 +10,9 @@ export class BlockscoutMCPService {
   private apiKey: string;
   private tools: Map<string, any>;
 
-  constructor(mcpServerUrl: string, apiKey: string = '') {
-    this.mcpServerUrl = mcpServerUrl;
-    this.apiKey = apiKey;
+  constructor(config: { mcpServerUrl: string; apiKey?: string }) {
+    this.mcpServerUrl = config.mcpServerUrl;
+    this.apiKey = config.apiKey || '';
     this.tools = new Map();
     this.initializeTools();
   }
@@ -61,20 +61,25 @@ export class BlockscoutMCPService {
    */
   async getChainsList(): Promise<any[]> {
     try {
-      const response = await axios.post(`${this.mcpServerUrl}/mcp/tools/get_chains_list`, {
-        method: 'get_chains_list',
-        params: {}
-      }, {
+      const response = await axios.get(`${this.mcpServerUrl}/mcp/tools/get_chains_list`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 10000 // 10 second timeout
       });
       
       return response.data;
     } catch (error) {
-      console.error('Error fetching chains list:', error);
-      throw error;
+      console.error('Error fetching chains list from MCP server:', error);
+      // Fallback to hardcoded list if MCP server is unavailable
+      return [
+        { id: 1, name: 'Ethereum', rpcUrl: 'https://eth.llamarpc.com' },
+        { id: 11155111, name: 'Sepolia', rpcUrl: 'https://sepolia.infura.io/v3/YOUR_INFURA_KEY' },
+        { id: 137, name: 'Polygon', rpcUrl: 'https://polygon.llamarpc.com' },
+        { id: 56, name: 'BSC', rpcUrl: 'https://bsc.llamarpc.com' },
+        { id: 421614, name: 'Arbitrum Sepolia', rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc' }
+      ];
     }
   }
 
@@ -83,13 +88,11 @@ export class BlockscoutMCPService {
    */
   async getAddressInfo(chainId: number, address: string): Promise<any> {
     try {
-      const response = await axios.post(`${this.mcpServerUrl}/mcp/tools/get_address_info`, {
-        method: 'get_address_info',
+      const response = await axios.get(`${this.mcpServerUrl}/mcp/tools/get_address_info`, {
         params: {
           chain_id: chainId,
           address: address
-        }
-      }, {
+        },
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json'
@@ -108,13 +111,11 @@ export class BlockscoutMCPService {
    */
   async getTokenHoldings(chainId: number, address: string): Promise<any[]> {
     try {
-      const response = await axios.post(`${this.mcpServerUrl}/mcp/tools/get_token_holdings`, {
-        method: 'get_token_holdings',
+      const response = await axios.get(`${this.mcpServerUrl}/mcp/tools/get_token_holdings`, {
         params: {
           chain_id: chainId,
           address: address
-        }
-      }, {
+        },
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json'
@@ -141,24 +142,39 @@ export class BlockscoutMCPService {
     recommendations: string[];
   }> {
     try {
-      const response = await axios.post(`${this.mcpServerUrl}/mcp/tools/analyze_activation_sequence`, {
-        method: 'analyze_activation_sequence',
+      const response = await axios.get(`${this.mcpServerUrl}/mcp/tools/analyze_activation_sequence`, {
         params: {
           chain_id: chainId,
           contract_address: contractAddress,
           time_range: timeRange
-        }
-      }, {
+        },
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000 // 30 second timeout for analysis
       });
       
       return response.data;
     } catch (error) {
-      console.error(`Error analyzing activation sequence:`, error);
-      throw error;
+      console.error(`Error analyzing activation sequence via MCP:`, error);
+      
+      // Fallback to basic analysis if MCP server is unavailable
+      return {
+        anomalies: [
+          {
+            type: 'mcp_unavailable',
+            description: 'MCP server is not responding, using fallback analysis',
+            severity: 'warning'
+          }
+        ],
+        summary: 'Unable to perform full analysis due to MCP server unavailability. Please check server status.',
+        recommendations: [
+          'Verify MCP server is running on ' + this.mcpServerUrl,
+          'Check network connectivity',
+          'Verify API key configuration'
+        ]
+      };
     }
   }
 

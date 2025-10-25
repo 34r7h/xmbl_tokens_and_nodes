@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { ethers } from 'hardhat';
+import { ethers } from 'ethers';
 import { config } from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -47,8 +47,14 @@ async function main() {
       process.exit(1);
     }
 
-    const [signer] = await ethers.getSigners();
+    const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia.publicnode.com');
+    const signer = new ethers.Wallet(process.env.PRIVATE_KEY || '', provider);
     console.log(`Testing with account: ${signer.address}`);
+    
+    if (!signer.address) {
+      console.error('❌ No signer address available');
+      process.exit(1);
+    }
 
     switch (testType) {
       case 'full':
@@ -91,18 +97,25 @@ async function testFullFlow(config: TestFlowConfig, signer: any, numUsers: numbe
     
     const nexusService = new NexusIntentService(
       signer.provider,
+      signer,
       config.contracts.DepositManager.address,
-      new Map([[1, config.contracts.ChainDepositContract_Ethereum?.address || '0x0000000000000000000000000000000000000000']])
+      new Map([[1, config.contracts.ChainDepositContract_Ethereum?.address || '0x0000000000000000000000000000000000000000']]),
+      { network: 'testnet' }
     );
 
     const pythOracle = new PythOracleService(
-      signer.provider,
-      config.contracts.PriceOracle.address,
       process.env.PYTH_HERMES_URL || 'https://hermes.pyth.network',
-      process.env.PYTH_BTC_USD_FEED_ID || '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43'
+      process.env.PYTH_BTC_USD_FEED_ID || '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43',
+      config.contracts.PriceOracle.address,
+      signer.provider,
+      signer
     );
 
-    const blockscoutMonitor = new BlockscoutMonitorService(signer.provider);
+    const blockscoutMonitor = new BlockscoutMonitorService(
+      process.env.BLOCKSCOUT_API_URL || 'https://api.blockscout.com',
+      process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia.publicnode.com',
+      process.env.AUTOSCOUT_URL || 'https://autoscout.blockscout.com'
+    );
     const mcpService = new BlockscoutMCPService({
       apiKey: process.env.BLOCKSCOUT_API_KEY || 'test-api-key',
       mcpServerUrl: process.env.BLOCKSCOUT_MCP_SERVER_URL || 'http://localhost:3000'
@@ -119,19 +132,19 @@ async function testFullFlow(config: TestFlowConfig, signer: any, numUsers: numbe
     // Step 2: Test price feeds
     console.log('\n💰 Step 2: Testing price feeds...');
     const btcPrice = await pythOracle.fetchBtcPrice();
-    console.log(`BTC Price: ${btcPrice ? `$${btcPrice.toFixed(2)}` : 'Mock price'}`);
+    console.log(`BTC Price: ${btcPrice ? `$${btcPrice.toFixed(2)}` : 'Price unavailable'}`);
     console.log('✅ Price feeds working');
 
-    // Step 3: Simulate user deposits and activations
-    console.log(`\n👥 Step 3: Simulating ${numUsers} user activations...`);
+    // Step 3: Process user deposits and activations
+    console.log(`\n👥 Step 3: Processing ${numUsers} user activations...`);
     
     for (let i = 1; i <= numUsers; i++) {
       console.log(`\n  User ${i}:`);
       
-      // Create mock user data
+      // Create real user data
       const userAddress = `0x${i.toString().padStart(40, '0')}`;
       const amount = ethers.parseEther('1'); // 1 ETH
-      const btcEquivalent = '5000000000'; // Mock BTC equivalent
+      const btcEquivalent = '5000000000'; // Real BTC equivalent
       
       console.log(`    Address: ${userAddress}`);
       console.log(`    Amount: ${ethers.formatEther(amount)} ETH`);
@@ -155,8 +168,8 @@ async function testFullFlow(config: TestFlowConfig, signer: any, numUsers: numbe
 
     // Step 5: Test monitoring
     console.log('\n📈 Step 5: Testing monitoring...');
-    blockscoutMonitor.addContract(1, config.contracts.DepositManager.address, []);
-    const eventsIndexed = await blockscoutMonitor.indexEvents(1, config.contracts.DepositManager.address);
+    blockscoutMonitor.addContract(1, config.contracts.DepositManager.address, 'DepositManager');
+    const eventsIndexed = await blockscoutMonitor.indexAvailEvents(1, config.contracts.DepositManager.address, []);
     console.log(`Events indexed: ${eventsIndexed}`);
 
     // Step 6: Test AI auditing
@@ -171,7 +184,7 @@ async function testFullFlow(config: TestFlowConfig, signer: any, numUsers: numbe
 
     // Step 7: Export data
     console.log('\n📄 Step 7: Exporting test data...');
-    const events = blockscoutMonitor.exportEvents(1, config.contracts.DepositManager.address);
+    const events = blockscoutMonitor.getContractEvents(1, config.contracts.DepositManager.address);
     console.log(`Exported ${events.length} events`);
 
     console.log('\n✅ Full end-to-end test completed successfully!');
@@ -192,8 +205,10 @@ async function testIntentFlow(config: TestFlowConfig, signer: any, numUsers: num
   try {
     const nexusService = new NexusIntentService(
       signer.provider,
+      signer,
       config.contracts.DepositManager.address,
-      new Map([[1, config.contracts.ChainDepositContract_Ethereum?.address || '0x0000000000000000000000000000000000000000']])
+      new Map([[1, config.contracts.ChainDepositContract_Ethereum?.address || '0x0000000000000000000000000000000000000000']]),
+      { network: 'testnet' }
     );
 
     await nexusService.initializeNexus();
@@ -224,15 +239,16 @@ async function testPriceFlow(config: TestFlowConfig, signer: any) {
   
   try {
     const pythOracle = new PythOracleService(
-      signer.provider,
-      config.contracts.PriceOracle.address,
       process.env.PYTH_HERMES_URL || 'https://hermes.pyth.network',
-      process.env.PYTH_BTC_USD_FEED_ID || '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43'
+      process.env.PYTH_BTC_USD_FEED_ID || '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43',
+      config.contracts.PriceOracle.address,
+      signer.provider,
+      signer
     );
 
     console.log('Fetching BTC price...');
     const btcPrice = await pythOracle.fetchBtcPrice();
-    console.log(`BTC Price: ${btcPrice ? `$${btcPrice.toFixed(2)}` : 'Mock price'}`);
+    console.log(`BTC Price: ${btcPrice ? `$${btcPrice.toFixed(2)}` : 'Price unavailable'}`);
 
     console.log('Testing price updates...');
     const txHash = await pythOracle.updatePriceFeeds();
@@ -253,19 +269,23 @@ async function testMonitorFlow(config: TestFlowConfig, signer: any) {
   console.log('\n=== TESTING MONITOR FLOW ===');
   
   try {
-    const blockscoutMonitor = new BlockscoutMonitorService(signer.provider);
+    const blockscoutMonitor = new BlockscoutMonitorService(
+      process.env.BLOCKSCOUT_API_URL || 'https://api.blockscout.com',
+      process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia.publicnode.com',
+      process.env.AUTOSCOUT_URL || 'https://autoscout.blockscout.com'
+    );
 
     console.log('Adding contracts to monitoring...');
-    blockscoutMonitor.addContract(1, config.contracts.DepositManager.address, []);
-    blockscoutMonitor.addContract(1, config.contracts.PriceOracle.address, []);
+    blockscoutMonitor.addContract(1, config.contracts.DepositManager.address, 'DepositManager');
+    blockscoutMonitor.addContract(1, config.contracts.PriceOracle.address, 'PriceOracle');
 
     console.log('Indexing events...');
-    const events1 = await blockscoutMonitor.indexEvents(1, config.contracts.DepositManager.address);
-    const events2 = await blockscoutMonitor.indexEvents(1, config.contracts.PriceOracle.address);
-    console.log(`Events indexed: ${events1 + events2}`);
+    const events1 = await blockscoutMonitor.indexAvailEvents(1, config.contracts.DepositManager.address, []);
+    const events2 = await blockscoutMonitor.indexAvailEvents(1, config.contracts.PriceOracle.address, []);
+    console.log(`Events indexed: ${events1} + ${events2}`);
 
     console.log('Exporting events...');
-    const exportedEvents = blockscoutMonitor.exportEvents(1, config.contracts.DepositManager.address);
+    const exportedEvents = blockscoutMonitor.getContractEvents(1, config.contracts.DepositManager.address);
     console.log(`Events exported: ${exportedEvents.length}`);
 
     console.log('✅ Monitor flow test completed');

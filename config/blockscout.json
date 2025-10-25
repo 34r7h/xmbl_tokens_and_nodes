@@ -9,14 +9,14 @@
     },
     "mcp": {
       "enabled": true,
-      "serverUrl": "http://localhost:3000",
+      "serverUrl": "https://mcp.blockscout.com",
       "apiKey": "YOUR_BLOCKSCOUT_API_KEY",
       "timeout": 30000,
       "retryAttempts": 3
     },
     "autoscout": {
       "enabled": true,
-      "explorerUrl": "http://localhost:3001",
+      "explorerUrl": "https://deploy.blockscout.com",
       "monitoringInterval": 30000,
       "eventIndexing": true,
       "aiAuditing": true
@@ -133,7 +133,11 @@
     "enableAutoscout": true,
     "enableAI": true,
     "logLevel": "info",
-    "exportFormats": ["json", "csv", "table"],
+    "exportFormats": [
+      "json",
+      "csv",
+      "table"
+    ],
     "retentionPeriod": "30d"
   }
 }

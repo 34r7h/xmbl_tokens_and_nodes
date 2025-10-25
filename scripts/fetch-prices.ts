@@ -47,15 +47,16 @@ async function main() {
 
     // Initialize Pyth Oracle Service
     const pythOracle = new PythOracleService(
-      signer.provider,
-      deploymentConfig.contracts.PriceOracle.address,
       process.env.PYTH_HERMES_URL || 'https://hermes.pyth.network',
-      process.env.PYTH_BTC_USD_FEED_ID || '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43'
+      process.env.PYTH_BTC_USD_FEED_ID || '0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43',
+      process.env.PRICE_ORACLE_ADDRESS || deploymentConfig.contracts.PriceOracle.address,
+      signer.provider,
+      signer
     );
 
     // Connect to PriceOracle contract
     const PriceOracleFactory = await ethers.getContractFactory('PriceOracle');
-    const priceOracle = PriceOracleFactory.attach(deploymentConfig.contracts.PriceOracle.address);
+    const priceOracle = PriceOracleFactory.attach(process.env.PRICE_ORACLE_ADDRESS || deploymentConfig.contracts.PriceOracle.address);
 
     switch (command) {
       case 'current':
@@ -101,11 +102,9 @@ async function fetchCurrentPrices(
     // Get XMBL token price from contract
     const xmblPrice = await priceOracle.getCurrentPrice();
     const tokensMinted = await priceOracle.tokensMinted();
-    const tokensDeactivated = await priceOracle.tokensDeactivated();
 
     console.log(`XMBL Token Price: ${ethers.formatUnits(xmblPrice, 8)} satoshis`);
     console.log(`Tokens Minted: ${tokensMinted}`);
-    console.log(`Tokens Deactivated: ${tokensDeactivated}`);
 
     // Calculate price using golden ratio formula
     const calculatedPrice = await priceOracle.calculatePrice(tokensMinted);
@@ -217,8 +216,17 @@ async function showPriceStatus(
     console.log('\n💾 Cache Status:');
     const cacheStats = pythOracle.getCacheStats();
     console.log(`  Size: ${cacheStats.size} entries`);
-    console.log(`  Oldest: ${cacheStats.oldestEntry ? new Date(cacheStats.oldestEntry).toISOString() : 'None'}`);
-    console.log(`  Newest: ${cacheStats.newestEntry ? new Date(cacheStats.newestEntry).toISOString() : 'None'}`);
+    if (cacheStats.entries.length > 0) {
+      const oldest = cacheStats.entries.reduce((oldest, entry) => 
+        entry.age > oldest.age ? entry : oldest, cacheStats.entries[0]);
+      const newest = cacheStats.entries.reduce((newest, entry) => 
+        entry.age < newest.age ? entry : newest, cacheStats.entries[0]);
+      console.log(`  Oldest: ${new Date(Date.now() - oldest.age).toISOString()}`);
+      console.log(`  Newest: ${new Date(Date.now() - newest.age).toISOString()}`);
+    } else {
+      console.log(`  Oldest: None`);
+      console.log(`  Newest: None`);
+    }
 
     // Current prices
     console.log('\n💰 Current Prices:');

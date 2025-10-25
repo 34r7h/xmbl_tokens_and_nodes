@@ -4,3 +4,4 @@
 export type { ChainDepositContract } from "./ChainDepositContract";
 export type { DepositManager } from "./DepositManager";
 export type { PriceOracle } from "./PriceOracle";
+export type { XMBLToken } from "./XMBLToken";

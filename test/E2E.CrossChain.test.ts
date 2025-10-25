@@ -93,6 +93,7 @@ describe('E2E Cross-Chain Integration', function () {
     // Test with invalid configurations
     const invalidNexus = new NexusIntentService(
       provider,
+      signer,
       '0x0000000000000000000000000000000000000000',
       new Map([[1, '0x0000000000000000000000000000000000000000']])
     );

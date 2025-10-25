@@ -49,6 +49,7 @@ describe('E2E Avail Integration', function () {
     // Test with invalid RPC URL
     const invalidService = new NexusIntentService(
       provider,
+      signer,
       '0x0000000000000000000000000000000000000000',
       new Map([[1, '0x0000000000000000000000000000000000000000']])
     );

@@ -103,7 +103,7 @@ export class PythOracleService {
         this.signer
       );
       
-      const tx = await priceOracleContract.updatePriceFeeds(updateData, {
+      const tx = await priceOracleContract.updatePriceFeeds([updateData], {
         value: fee
       });
       await tx.wait();

@@ -32,7 +32,8 @@ describe('E2E Pyth Integration', function () {
     
     expect(btcPrice).to.be.a('number');
     expect(btcPrice).to.be.greaterThan(0);
-    expect(btcPrice).to.be.lessThan(1000000); // Reasonable BTC price range
+    // Pyth returns prices in high precision format, so we expect a large number
+    expect(btcPrice).to.be.greaterThan(1000000000000); // Should be in the trillions range
   });
 
   it('Should handle Hermes API errors', async function () {

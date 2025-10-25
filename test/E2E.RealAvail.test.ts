@@ -11,18 +11,18 @@ describe('E2E Avail Integration', function () {
     [signer] = await ethers.getSigners();
     provider = signer.provider;
     
-    // Skip if no Avail configuration
-    if (!process.env.AVAIL_RPC_URL) {
-      this.skip();
-    }
+    // Set environment variables for testing
+    process.env.AVAIL_RPC_URL = 'https://nexus-rpc.avail.tools';
   });
 
   beforeEach(async function () {
     // Initialize with real Avail configuration
     nexusService = new NexusIntentService(
       provider,
+      signer,
       '0x0000000000000000000000000000000000000000', // Mock deposit manager
-      new Map([[1, '0x0000000000000000000000000000000000000000']]) // Mock chain contract
+      new Map([[1, '0x0000000000000000000000000000000000000000']]), // Mock chain contract
+      { network: 'testnet' }
     );
   });
 

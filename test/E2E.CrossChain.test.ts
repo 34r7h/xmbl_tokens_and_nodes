@@ -15,18 +15,19 @@ describe('E2E Cross-Chain Integration', function () {
     [signer] = await ethers.getSigners();
     provider = signer.provider;
     
-    // Skip if no integrations configured
-    if (!process.env.AVAIL_RPC_URL || !process.env.PYTH_HERMES_URL) {
-      this.skip();
-    }
+    // Set environment variables for testing
+    process.env.AVAIL_RPC_URL = 'https://nexus-rpc.avail.tools';
+    process.env.PYTH_HERMES_URL = 'https://hermes.pyth.network';
   });
 
   beforeEach(async function () {
     // Initialize all services with actual configurations
     nexusService = new NexusIntentService(
       provider,
+      signer,
       '0x0000000000000000000000000000000000000000',
-      new Map([[1, '0x0000000000000000000000000000000000000000']])
+      new Map([[1, '0x0000000000000000000000000000000000000000']]),
+      { network: 'testnet' }
     );
 
     pythService = new PythOracleService(

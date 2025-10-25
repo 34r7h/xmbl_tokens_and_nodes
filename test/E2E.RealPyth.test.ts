@@ -11,10 +11,8 @@ describe('E2E Pyth Integration', function () {
     [signer] = await ethers.getSigners();
     provider = signer.provider;
     
-    // Skip if no Pyth configuration
-    if (!process.env.PYTH_HERMES_URL) {
-      this.skip();
-    }
+    // Set environment variables for testing
+    process.env.PYTH_HERMES_URL = 'https://hermes.pyth.network';
   });
 
   beforeEach(async function () {

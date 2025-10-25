@@ -113,13 +113,13 @@ export class BTCConversionService {
     netBTCForActivation: number;
   } {
     // Oracle costs (Pyth price feed updates)
-    const oracleCosts = Math.ceil(btcAmountSats * 0.001); // 0.1% of BTC amount
+    const oracleCosts = Math.ceil(btcAmountSats * 0.0001); // 0.01% of BTC amount
     
     // Contract execution costs
-    const contractCosts = Math.ceil(btcAmountSats * 0.002); // 0.2% of BTC amount
+    const contractCosts = Math.ceil(btcAmountSats * 0.0002); // 0.02% of BTC amount
     
     // Network fees (gas, etc.)
-    const networkFees = Math.ceil(btcAmountSats * 0.003); // 0.3% of BTC amount
+    const networkFees = Math.ceil(btcAmountSats * 0.0003); // 0.03% of BTC amount
     
     const totalCosts = oracleCosts + contractCosts + networkFees;
     const netBTCForActivation = Math.max(0, btcAmountSats - totalCosts);
@@ -157,16 +157,17 @@ export class BTCConversionService {
       console.log(`  Target BTC: ${btcAmountSats} sats`);
       
       // Calculate split between liquidity and developer pools
-      const liquidityPercentage = this.calculateLiquidityPercentage(btcAmount);
+      const liquidityPercentage = this.calculateLiquidityPercentage(btcAmountSats);
       const developerPercentage = 100 - liquidityPercentage;
       
-      const liquidityAmount = (btcAmount * liquidityPercentage) / 100;
-      const developerAmount = (btcAmount * developerPercentage) / 100;
+      // Use the target BTC amount for calculations
+      const liquidityAmount = (btcAmountSats * liquidityPercentage) / 100;
+      const developerAmount = (btcAmountSats * developerPercentage) / 100;
       
       console.log(`💰 BTC Split Calculation:`);
-      console.log(`  Total BTC: ${ethers.formatUnits(btcAmount, 8)} BTC`);
-      console.log(`  Liquidity Pool: ${liquidityPercentage}% = ${ethers.formatUnits(liquidityAmount, 8)} BTC`);
-      console.log(`  Developer Pool: ${developerPercentage}% = ${ethers.formatUnits(developerAmount, 8)} BTC`);
+      console.log(`  Total BTC: ${(btcAmountSats / 1e8).toFixed(8)} BTC`);
+      console.log(`  Liquidity Pool: ${liquidityPercentage}% = ${(liquidityAmount / 1e8).toFixed(8)} BTC`);
+      console.log(`  Developer Pool: ${developerPercentage}% = ${(developerAmount / 1e8).toFixed(8)} BTC`);
       
       // Execute THORChain swaps to both pools
       let liquiditySwapResult;
@@ -176,48 +177,66 @@ export class BTCConversionService {
         case 'ETH':
           // Liquidity pool swap
           liquiditySwapResult = await this.thorchainIntegration.executeSwap(
-            'ETH.ETH',
-            'BTC.BTC',
-            (fromAmount * liquidityPercentage / 100).toString(),
-            this.config.thorchainConfig.btcTestnetLiquidityAddress || this.config.liquidityPoolAddress
+            {
+              fromAsset: 'ETH.ETH',
+              toAsset: 'BTC.BTC',
+              amount: liquidityAmount.toString(), // Already in satoshis
+              recipient: this.config.thorchainConfig.btcTestnetLiquidityAddress || this.config.liquidityPoolAddress
+            },
+            this.signer
           );
           
           // Developer pool swap
           developerSwapResult = await this.thorchainIntegration.executeSwap(
-            'ETH.ETH',
-            'BTC.BTC',
-            (fromAmount * developerPercentage / 100).toString(),
-            this.config.thorchainConfig.btcTestnetDeveloperAddress || this.config.developmentPoolAddress
+            {
+              fromAsset: 'ETH.ETH',
+              toAsset: 'BTC.BTC',
+              amount: developerAmount.toString(), // Already in satoshis
+              recipient: this.config.thorchainConfig.btcTestnetDeveloperAddress || this.config.developmentPoolAddress
+            },
+            this.signer
           );
           break;
         case 'USDC':
           liquiditySwapResult = await this.thorchainIntegration.executeSwap(
-            'ETH.USDC-0XA0B86A33E6C0C0C0C0C0C0C0C0C0C0C0C0C0C0C0',
-            'BTC.BTC',
-            (fromAmount * liquidityPercentage / 100).toString(),
-            this.config.thorchainConfig.btcTestnetLiquidityAddress || this.config.liquidityPoolAddress
+            {
+              fromAsset: 'ETH.USDC-0XA0B86A33E6C0C0C0C0C0C0C0C0C0C0C0C0C0C0C0',
+              toAsset: 'BTC.BTC',
+              amount: liquidityAmount.toString(), // Already in satoshis
+              recipient: this.config.thorchainConfig.btcTestnetLiquidityAddress || this.config.liquidityPoolAddress
+            },
+            this.signer
           );
           
           developerSwapResult = await this.thorchainIntegration.executeSwap(
-            'ETH.USDC-0XA0B86A33E6C0C0C0C0C0C0C0C0C0C0C0C0C0C0C0',
-            'BTC.BTC',
-            (fromAmount * developerPercentage / 100).toString(),
-            this.config.thorchainConfig.btcTestnetDeveloperAddress || this.config.developmentPoolAddress
+            {
+              fromAsset: 'ETH.USDC-0XA0B86A33E6C0C0C0C0C0C0C0C0C0C0C0C0C0C0C0',
+              toAsset: 'BTC.BTC',
+              amount: developerAmount.toString(), // Already in satoshis
+              recipient: this.config.thorchainConfig.btcTestnetDeveloperAddress || this.config.developmentPoolAddress
+            },
+            this.signer
           );
           break;
         case 'USDT':
           liquiditySwapResult = await this.thorchainIntegration.executeSwap(
-            'ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7',
-            'BTC.BTC',
-            (fromAmount * liquidityPercentage / 100).toString(),
-            this.config.thorchainConfig.btcTestnetLiquidityAddress || this.config.liquidityPoolAddress
+            {
+              fromAsset: 'ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7',
+              toAsset: 'BTC.BTC',
+              amount: liquidityAmount.toString(), // Already in satoshis
+              recipient: this.config.thorchainConfig.btcTestnetLiquidityAddress || this.config.liquidityPoolAddress
+            },
+            this.signer
           );
           
           developerSwapResult = await this.thorchainIntegration.executeSwap(
-            'ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7',
-            'BTC.BTC',
-            (fromAmount * developerPercentage / 100).toString(),
-            this.config.thorchainConfig.btcTestnetDeveloperAddress || this.config.developmentPoolAddress
+            {
+              fromAsset: 'ETH.USDT-0XDAC17F958D2EE523A2206206994597C13D831EC7',
+              toAsset: 'BTC.BTC',
+              amount: developerAmount.toString(), // Already in satoshis
+              recipient: this.config.thorchainConfig.btcTestnetDeveloperAddress || this.config.developmentPoolAddress
+            },
+            this.signer
           );
           break;
         default:
@@ -226,15 +245,15 @@ export class BTCConversionService {
       
       // Combine results
       const swapResult = {
-        success: liquiditySwapResult.success && developerSwapResult.success,
+        success: liquiditySwapResult.status === 'completed' && developerSwapResult.status === 'completed',
         liquidityTxHash: liquiditySwapResult.txHash,
         developerTxHash: developerSwapResult.txHash,
-        liquidityOutput: liquiditySwapResult.estimatedOutput,
-        developerOutput: developerSwapResult.estimatedOutput,
-        totalOutput: (parseFloat(liquiditySwapResult.estimatedOutput || '0') + parseFloat(developerSwapResult.estimatedOutput || '0')).toString(),
+        liquidityOutput: liquiditySwapResult.toAmount,
+        developerOutput: developerSwapResult.toAmount,
+        totalOutput: (parseFloat(liquiditySwapResult.toAmount || '0') + parseFloat(developerSwapResult.toAmount || '0')).toString(),
         fees: {
-          liquidity: liquiditySwapResult.fees,
-          developer: developerSwapResult.fees
+          liquidity: liquiditySwapResult.fee,
+          developer: developerSwapResult.fee
         }
       };
       
@@ -242,14 +261,22 @@ export class BTCConversionService {
         throw new Error(`THORChain swap failed: ${swapResult.error}`);
       }
       
-      console.log(`✅ THORChain swap successful! TX: ${swapResult.txHash}`);
-      console.log(`💰 Expected BTC output: ${swapResult.estimatedOutput}`);
-      console.log(`💸 Swap fees: ${swapResult.fees?.total}`);
+      console.log(`✅ THORChain swap successful! TX: ${swapResult.liquidityTxHash}, ${swapResult.developerTxHash}`);
+      console.log(`💰 Expected BTC output: ${swapResult.totalOutput}`);
+      console.log(`💸 Swap fees: ${swapResult.fees?.liquidity}, ${swapResult.fees?.developer}`);
       
       // Calculate all costs including THORChain fees
       const costs = this.calculateTotalCosts(btcAmountSats);
-      const thorchainFees = swapResult.fees?.total || '0';
-      const totalCosts = costs.totalCosts + parseInt(thorchainFees);
+      const thorchainFees = (parseFloat(swapResult.fees?.liquidity || '0') + parseFloat(swapResult.fees?.developer || '0'));
+      const totalCosts = costs.totalCosts + thorchainFees;
+      
+      console.log(`💸 Cost breakdown:`);
+      console.log(`  Oracle costs: ${costs.oracleCosts} sats`);
+      console.log(`  Contract costs: ${costs.contractCosts} sats`);
+      console.log(`  Network fees: ${costs.networkFees} sats`);
+      console.log(`  THORChain fees: ${thorchainFees} sats`);
+      console.log(`  Total costs: ${totalCosts} sats`);
+      console.log(`  Net BTC for activation: ${btcAmountSats - totalCosts} sats`);
       
       // Only net BTC counts toward token activation
       const netBTCForActivation = Math.max(0, btcAmountSats - totalCosts);

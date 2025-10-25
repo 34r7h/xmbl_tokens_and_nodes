@@ -85,8 +85,8 @@ export class ThorchainIntegration {
 
       // Mock swap execution for testing
       const mockTxHash = ethers.keccak256(ethers.toUtf8Bytes(`swap_${Date.now()}`));
-      const mockToAmount = (parseFloat(params.amount) * 0.95).toString();
-      const mockFee = (parseFloat(params.amount) * 0.05).toString();
+      const mockToAmount = (parseFloat(params.amount) * 0.999).toString();
+      const mockFee = (parseFloat(params.amount) * 0.001).toString();
 
       // Simulate transaction confirmation
       await new Promise(resolve => setTimeout(resolve, 2000));

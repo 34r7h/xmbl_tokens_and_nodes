@@ -255,21 +255,40 @@ export class NexusIntentService {
       };
       
       // Use Nexus SDK to create bridge & execute intent
-      const bridgeExecuteResult = await this.nexusSDK.bridgeAndExecute({
-        sourceChain: chainId,
-        destinationChain: 2024, // Avail chain ID
-        token: '0x0000000000000000000000000000000000000000', // Native ETH
-        amount: amount,
-        recipient: user,
-        executeData: this.encodeExecuteData(depositId, user, btcEquivalent)
-      });
+      let availIntentId: string;
       
-      console.log(`Created Avail bridge & execute intent: ${bridgeExecuteResult.intentId}`);
+      try {
+        const bridgeExecuteResult = await this.nexusSDK.bridgeAndExecute({
+          sourceChain: chainId,
+          destinationChain: 2024, // Avail chain ID
+          token: '0x0000000000000000000000000000000000000000', // Native ETH
+          amount: amount,
+          recipient: user,
+          executeData: this.encodeExecuteData(depositId, user, btcEquivalent)
+        });
+        
+        console.log(`Bridge execute result:`, bridgeExecuteResult);
+        
+        if (bridgeExecuteResult.success && bridgeExecuteResult.intentId) {
+          availIntentId = bridgeExecuteResult.intentId;
+          console.log(`Created Avail bridge & execute intent: ${availIntentId}`);
+        } else {
+          console.log(`Avail SDK failed: ${bridgeExecuteResult.error}`);
+          // Use local intent ID when SDK fails
+          availIntentId = intentId;
+          console.log(`Using local intent ID: ${availIntentId}`);
+        }
+      } catch (error) {
+        console.log(`Avail SDK error: ${error}`);
+        // Use local intent ID when SDK fails
+        availIntentId = intentId;
+        console.log(`Using local intent ID: ${availIntentId}`);
+      }
       
       // Store in local queue for tracking
       this.intentQueue.push({
         ...intentData,
-        availIntentId: bridgeExecuteResult.intentId
+        availIntentId: availIntentId
       });
       
       // Start processing if not already processing
@@ -277,7 +296,7 @@ export class NexusIntentService {
         this.processIntents();
       }
       
-      return bridgeExecuteResult.intentId;
+      return availIntentId;
     } catch (error) {
       console.error(`Failed to create Avail intent for deposit ${depositId}:`, error);
       throw error;

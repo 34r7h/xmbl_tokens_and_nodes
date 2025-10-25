@@ -5,10 +5,12 @@ import { NexusIntentService } from "../services/NexusIntentService";
 describe("NexusIntentService", function () {
   let nexusService: NexusIntentService;
   let provider: ethers.Provider;
+  let deployer: any;
   let mockDepositManager: string;
   let mockChainContracts: Map<number, string>;
 
   beforeEach(async function () {
+    [deployer] = await ethers.getSigners();
     provider = ethers.provider;
     mockDepositManager = "0x0000000000000000000000000000000000000000";
     mockChainContracts = new Map([
@@ -18,8 +20,10 @@ describe("NexusIntentService", function () {
     
     nexusService = new NexusIntentService(
       provider,
-      mockDepositManager,
-      mockChainContracts
+      deployer, // Pass signer instead of empty object
+      "0x0000000000000000000000000000000000000000", // Mock deposit manager address
+      mockChainContracts,
+      { network: 'testnet' }
     );
   });
 

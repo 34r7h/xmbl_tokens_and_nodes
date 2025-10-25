@@ -53,10 +53,6 @@ declare module "hardhat/types/runtime" {
       name: "PriceOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.PriceOracle__factory>;
-    getContractFactory(
-      name: "XMBLToken",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.XMBLToken__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -108,11 +104,6 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.PriceOracle>;
-    getContractAt(
-      name: "XMBLToken",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.XMBLToken>;
 
     deployContract(
       name: "Ownable",
@@ -154,10 +145,6 @@ declare module "hardhat/types/runtime" {
       name: "PriceOracle",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PriceOracle>;
-    deployContract(
-      name: "XMBLToken",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.XMBLToken>;
 
     deployContract(
       name: "Ownable",
@@ -209,11 +196,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PriceOracle>;
-    deployContract(
-      name: "XMBLToken",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.XMBLToken>;
 
     // default types
     getContractFactory(

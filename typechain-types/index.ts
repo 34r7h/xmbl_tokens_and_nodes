@@ -28,5 +28,3 @@ export type { DepositManager } from "./contracts/DepositManager";
 export { DepositManager__factory } from "./factories/contracts/DepositManager__factory";
 export type { PriceOracle } from "./contracts/PriceOracle";
 export { PriceOracle__factory } from "./factories/contracts/PriceOracle__factory";
-export type { XMBLToken } from "./contracts/XMBLToken";
-export { XMBLToken__factory } from "./factories/contracts/XMBLToken__factory";

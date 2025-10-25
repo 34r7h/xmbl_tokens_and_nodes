@@ -41,14 +41,12 @@ export class BTCConversionService {
       provider
     );
     this.config = config;
-    this.thorchainIntegration = new ThorchainIntegration({
-      midgardUrl: 'https://testnet.multichain.midgard.thorchain.info/v2',
-      thornodeUrl: 'https://testnet.thornode.thorchain.info',
-      network: 'testnet',
-      btcTestnetLiquidityAddress: process.env.BTC_TESTNET_LIQUIDITY_ADDRESS,
-      btcTestnetLiquidityKey: process.env.BTC_TESTNET_LIQUIDITY_KEY,
-      btcTestnetDeveloperAddress: process.env.BTC_TESTNET_DEVELOPER_ADDRESS,
-      btcTestnetDeveloperKey: process.env.BTC_TESTNET_DEVELOPER_KEY
+    this.thorchainIntegration = new ThorchainIntegration(provider, {
+      rpcUrl: 'https://testnet.thorchain.network',
+      chainId: 1,
+      routerAddress: '0x0000000000000000000000000000000000000000',
+      vaultAddress: '0x0000000000000000000000000000000000000000',
+      testnet: true
     });
   }
 

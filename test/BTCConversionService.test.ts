@@ -14,7 +14,14 @@ describe("BTCConversionService", function () {
     liquidityPoolAddress: "0x2222222222222222222222222222222222222222",
     minLiquidityPercentage: 10, // 10% starting
     maxLiquidityPercentage: 95, // 95% upper bound
-    targetBTCForMaxLiquidity: 100 // 100 BTC
+    targetBTCForMaxLiquidity: 100, // 100 BTC
+    thorchainConfig: {
+      rpcUrl: "https://testnet.thorchain.network",
+      chainId: 1,
+      routerAddress: "0x0000000000000000000000000000000000000000",
+      vaultAddress: "0x0000000000000000000000000000000000000000",
+      testnet: true
+    }
   };
 
   beforeEach(async function () {
@@ -135,7 +142,9 @@ describe("BTCConversionService", function () {
     const result = await btcConversionService.processBTCConversion(
       deployer.address,
       btcAmountSats,
-      1
+      1,
+      'ETH',
+      '1000000000000000000' // 1 ETH
     );
     
     expect(result.success).to.be.true;

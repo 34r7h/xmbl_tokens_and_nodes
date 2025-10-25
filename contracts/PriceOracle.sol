@@ -21,7 +21,7 @@ contract PriceOracle {
     // Tokenomics Configuration (from Firebase implementation)
     uint256 public constant COIN_SUPPLY = 999999999; // Total coin supply
     uint256 public constant COIN_DIVIDE = 9; // Initial divisor for coin distribution
-    uint256 public constant COIN_RELEASE_TARGET = 369000; // Initial release target (0.00369 BTC in satoshis)
+    uint256 public constant COIN_RELEASE_TARGET = 369; // Initial release target (0.00369 BTC in satoshis)
     uint256 public constant GROWTH_FACTOR = 1; // Minimal growth factor
     
     IPyth public immutable pyth;
@@ -101,10 +101,12 @@ contract PriceOracle {
         
         // Firebase tokenomics formula: newPrice = cost + (cost / (GROWTH_FACTOR * (tokensMinted + 1)))
         uint256 cost = xymPrevPrice > 0 ? xymPrevPrice : STARTING_PRICE;
-        uint256 growthMultiplier = (GROWTH_FACTOR * (xymMinted + 1)) / 1000;
+        uint256 growthMultiplier = GROWTH_FACTOR * (xymMinted + 1);
         
         if (growthMultiplier > 0) {
             uint256 priceIncrease = cost / growthMultiplier;
+            // Ensure minimum price increase of 1 satoshi
+            if (priceIncrease == 0) priceIncrease = 1;
             xymNextPrice = cost + priceIncrease;
         } else {
             xymNextPrice = STARTING_PRICE;

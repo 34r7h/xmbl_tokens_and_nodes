@@ -33,11 +33,13 @@ export interface PriceOracleInterface extends Interface {
       | "PHI"
       | "SATOSHI_PRECISION"
       | "STARTING_PRICE"
+      | "activateBulkTokens"
       | "activateToken"
       | "activationCount"
       | "activationPrices"
       | "activationSettled"
       | "btcUsdPriceId"
+      | "calculateBulkCost"
       | "calculateNetworkFee"
       | "calculatePrice"
       | "currentPrice"
@@ -101,6 +103,10 @@ export interface PriceOracleInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "activateBulkTokens",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "activateToken",
     values?: undefined
   ): string;
@@ -119,6 +125,10 @@ export interface PriceOracleInterface extends Interface {
   encodeFunctionData(
     functionFragment: "btcUsdPriceId",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "calculateBulkCost",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "calculateNetworkFee",
@@ -230,6 +240,10 @@ export interface PriceOracleInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "activateBulkTokens",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "activateToken",
     data: BytesLike
   ): Result;
@@ -247,6 +261,10 @@ export interface PriceOracleInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "btcUsdPriceId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "calculateBulkCost",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -477,6 +495,12 @@ export interface PriceOracle extends BaseContract {
 
   STARTING_PRICE: TypedContractMethod<[], [bigint], "view">;
 
+  activateBulkTokens: TypedContractMethod<
+    [tokensToActivate: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   activateToken: TypedContractMethod<[], [void], "nonpayable">;
 
   activationCount: TypedContractMethod<[], [bigint], "view">;
@@ -490,6 +514,12 @@ export interface PriceOracle extends BaseContract {
   >;
 
   btcUsdPriceId: TypedContractMethod<[], [string], "view">;
+
+  calculateBulkCost: TypedContractMethod<
+    [tokensToActivate: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
   calculateNetworkFee: TypedContractMethod<
     [amount: BigNumberish],
@@ -618,6 +648,13 @@ export interface PriceOracle extends BaseContract {
     nameOrSignature: "STARTING_PRICE"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "activateBulkTokens"
+  ): TypedContractMethod<
+    [tokensToActivate: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "activateToken"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
@@ -632,6 +669,9 @@ export interface PriceOracle extends BaseContract {
   getFunction(
     nameOrSignature: "btcUsdPriceId"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "calculateBulkCost"
+  ): TypedContractMethod<[tokensToActivate: BigNumberish], [bigint], "view">;
   getFunction(
     nameOrSignature: "calculateNetworkFee"
   ): TypedContractMethod<[amount: BigNumberish], [bigint], "view">;

@@ -2,40 +2,45 @@
   "network": "sepolia",
   "contracts": {
     "PriceOracle": {
-      "address": "0x19d9ebAe7d0883f15f64D0519D35526FFDff0891",
-      "transactionHash": "0x00bd44a205c5eb149a87ea4725a4cbe41dc515f46ba953e5f2516e35dde9c47d",
-      "blockNumber": 9487599
+      "address": "0xcF086791cF5C266d9e6fe477190748F2f383E706",
+      "transactionHash": "0x6abd746d52ffe030ef9e991816ee9717bdd62f349078ae3d71778437ddec808c",
+      "blockNumber": 9490248
     },
     "DepositManager": {
-      "address": "0x230b0488c505cfadF97495c4Fd2243B8b531C83F",
-      "transactionHash": "0xb99c4d891b4e34e0ab10de5f72ae5a8d4476ae3d8b4b6eac22fa3d64fdffade8",
-      "blockNumber": 9487600
+      "address": "0xF9f49a1352A883627Fa9ead5959985945659db0D",
+      "transactionHash": "0x5b85a70f3f8aff1d63b5c8b60f3aa3eca2483c334f4868fab38f181960451b43",
+      "blockNumber": 9490249
     },
     "ChainDepositContract_Ethereum": {
-      "address": "0x8c55AfF0d51444aFa640F57d22E8d634d32aE24d",
-      "transactionHash": "0x8317dd6ead14c2007b7b7a9a0f43ed816692ef9523209c161e3eb21637719226",
-      "blockNumber": 9487601
+      "address": "0xe8fdd318b78A598782E99Cf6Cd249DD98dd0EE92",
+      "transactionHash": "0xe879e873f45c4b7ac8d16a446998ceba14345607a3bfa8d4827fb3e23fa8129a",
+      "blockNumber": 9490250
     },
     "ChainDepositContract_Polygon": {
-      "address": "0x974c32ECB7a26f3F3C08E439A8EE6aB0625964D7",
-      "transactionHash": "0x327456306de0599a025c68789300b4f84f2bd8b52a79409ae3edb18aee850905",
-      "blockNumber": 9487602
+      "address": "0xc2E885Bf0A25aDcb66048867142DDd2ce867Dd38",
+      "transactionHash": "0x2ddcd05ec105a4ed0a0f5f3f89be362dbb9d61c3cf899de8721d16b660ccbf33",
+      "blockNumber": 9490251
     },
     "ChainDepositContract_BSC": {
-      "address": "0xD8E4a3a42C5704A5bb996C679606785C34dE5D43",
-      "transactionHash": "0x834506d8d635fdb732f9b73e333605ec90446050966c2e0155c64feb43023296",
-      "blockNumber": 9487603
+      "address": "0xcC9b0D672e582EEcBf44df7D2392b1e21793c68c",
+      "transactionHash": "0x4e260fcb041db6f9f12d78ea8922eeae507fb9eb58ce28fa959f52628a22a0f1",
+      "blockNumber": 9490252
     },
     "ChainDepositContract_Arbitrum": {
-      "address": "0x1FDc7523c9355a6010c86e8Cc614605AAef85700",
-      "transactionHash": "0x0a55ff4cf76979dc228da28c41aa85de8b154096f4a274fc9e94a31908b1be43",
-      "blockNumber": 9487604
+      "address": "0x71CB85e84C2B7B78343828b4037ca24b52A1f786",
+      "transactionHash": "0x82f7a5b13464f30162523731170e4141bb90d2dd04824a40a582f3e3c1a1e7e4",
+      "blockNumber": 9490253
     },
     "ChainDepositContract_Optimism": {
-      "address": "0xd7CBf08480ba78814382f918230485DAFe02FdC6",
-      "transactionHash": "0x3f456eac3f3c23153d8acfc285ae4e2898d685e9bacdfa31a1cf1601a10da8a8",
-      "blockNumber": 9487605
+      "address": "0xd9ED8e3dBd56f53cE518451e261942d2dE223863",
+      "transactionHash": "0x7f9a28fa317bd2760bbd9a76d91150e55cef1f1027d1cd74e954142fdd578686",
+      "blockNumber": 9490254
+    },
+    "XMBLToken": {
+      "address": "0x50fef021AbDdc3EE4c5e4398B5487f2Ce11fC2De",
+      "transactionHash": "0x4c7809b28c245d90caecad7bcbf1c1a2321171ddb0a0eca9ee9fb95616029590",
+      "blockNumber": 9490255
     }
   },
-  "timestamp": 1761400874877
+  "timestamp": 1761432748990
 }

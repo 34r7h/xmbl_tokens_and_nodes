@@ -42,7 +42,8 @@ async function main() {
       process.exit(1);
     }
 
-    const [signer] = await ethers.getSigners();
+    const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia.publicnode.com');
+  const signer = new ethers.Wallet(process.env.PRIVATE_KEY || '', provider);
     console.log(`Fetching prices with account: ${signer.address}`);
 
     // Initialize Pyth Oracle Service

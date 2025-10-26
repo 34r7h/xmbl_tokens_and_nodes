@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XMBL E2E Cross-Chain Token Activation Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            display: flex;
+            height: 100vh;
+            gap: 8px;
+            padding: 8px;
+        }
+
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card {
+            background: #111;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .card-header {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .oracle-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .oracle-item {
+            background: #222;
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .oracle-label {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .oracle-value {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 4px 6px;
+            border: 1px solid #333;
+            background: #222;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .button {
+            padding: 6px 12px;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+
+        .button:hover {
+            background: #444;
+        }
+
+        .button.primary {
+            background: #0066cc;
+            border-color: #0066cc;
+        }
+
+        .button.primary:hover {
+            background: #0052a3;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #1a4d1a;
+            color: #4ade80;
+        }
+
+        .status.error {
+            background: #4d1a1a;
+            color: #f87171;
+        }
+
+        .status.loading {
+            background: #1a1a4d;
+            color: #60a5fa;
+        }
+
+        .wallet-info {
+            background: #222;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            word-break: break-all;
+        }
+
+        .nft-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 4px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .nft-item {
+            background: #222;
+            padding: 4px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .link-item {
+            background: #222;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+
+        .link-item a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .link-item a:hover {
+            text-decoration: underline;
+        }
+
+        .cross-chain-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 6px;
+        }
+
+        .cross-chain-item {
+            background: #222;
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .cross-chain-label {
+            font-size: 9px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .cross-chain-status {
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .cross-chain-detail {
+            font-size: 9px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .log-container {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 6px;
+            max-height: 80px;
+            overflow-y: auto;
+            font-size: 10px;
+            font-family: monospace;
+        }
+
+        .logo {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            margin: 0 0 8px 0;
+            font-weight: bold;
+        }
+
+        .header p {
+            font-size: 12px;
+            margin: 0;
+            color: #888;
+        }
+
+        @keyframes borderColorDance1 {
+            0% { border-color: rgb(0, 0, 0); }
+            20% { border-color: rgb(20, 190, 3); }
+            40% { border-color: rgb(143, 34, 12); }
+            60% { border-color: rgb(178, 56, 2); }
+            80% { border-color: rgb(142, 88, 7); }
+            100% { border-color: rgb(0, 0, 0); }
+        }
+
+        @keyframes borderColorDance2 {
+            0% { border-color: rgb(0, 0, 0); }
+            20% { border-color: rgb(51, 129, 214); }
+            40% { border-color: rgb(215, 171, 158); }
+            60% { border-color: rgb(232, 160, 215); }
+            80% { border-color: rgb(123, 141, 67); }
+            100% { border-color: rgb(0, 0, 0); }
+        }
+
+        @keyframes borderColorDance3 {
+            0% { border-color: rgb(0, 0, 0); }
+            20% { border-color: rgb(255, 255, 255); }
+            40% { border-color: rgb(128, 128, 128); }
+            60% { border-color: rgb(64, 64, 64); }
+            80% { border-color: rgb(192, 192, 192); }
+            100% { border-color: rgb(0, 0, 0); }
+        }
+
+        .card:nth-child(1) { animation: borderColorDance1 16.1s infinite linear; }
+        .card:nth-child(2) { animation: borderColorDance2 13.9s infinite linear; }
+        .card:nth-child(3) { animation: borderColorDance3 11.7s infinite linear; }
+        .card:nth-child(4) { animation: borderColorDance1 15.3s infinite linear; }
+        .card:nth-child(5) { animation: borderColorDance2 14.2s infinite linear; }
+        .card:nth-child(6) { animation: borderColorDance3 12.8s infinite linear; }
+        .card:nth-child(7) { animation: borderColorDance1 13.5s infinite linear; }
+        .card:nth-child(8) { animation: borderColorDance2 16.7s infinite linear; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="./logo_.svg" class="logo" alt="XMBL Logo">
+        <h1>XMBL E2E Cross-Chain Token Activation Platform</h1>
+        <p>Multi-chain token activation with Avail Nexus, Pyth Network, and Blockscout MCP integration</p>
+    </div>
+    
+    <div class="dashboard">
+        <div class="left-panel">
+            <!-- Oracle Status -->
+            <div class="card">
+                <div class="card-header">📊 Oracle Status</div>
+                <div class="card-content">
+                    <div class="oracle-grid">
+                        <div class="oracle-item">
+                            <div class="oracle-label">BTC Price (USD)</div>
+                            <div class="oracle-value" id="btcPrice">Loading...</div>
+                        </div>
+                        <div class="oracle-item">
+                            <div class="oracle-label">XMBL Price (sats)</div>
+                            <div class="oracle-value" id="currentPrice">Loading...</div>
+                        </div>
+                        <div class="oracle-item">
+                            <div class="oracle-label">Next Price (sats)</div>
+                            <div class="oracle-value" id="nextPrice">Loading...</div>
+                        </div>
+                        <div class="oracle-item">
+                            <div class="oracle-label">Tokens Minted</div>
+                            <div class="oracle-value" id="tokensMinted">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="oracle-item">
+                        <div class="oracle-label">Proof of Faith (sats)</div>
+                        <div class="oracle-value" id="proofOfFaith">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Activation -->
+            <div class="card">
+                <div class="card-header">⚡ Token Activation</div>
+                <div class="card-content">
+                    <div class="input-group">
+                        <label>Tokens:</label>
+                        <input type="number" id="tokenAmount" value="1" min="1" max="100">
+                        <button class="button primary" id="activateBtn">Activate</button>
+                    </div>
+                    <div class="oracle-item">
+                        <div class="oracle-label">Price Calculation</div>
+                        <div class="oracle-value" id="priceCalculation">Loading...</div>
+                    </div>
+                    <div class="oracle-item">
+                        <div class="oracle-label">Total Cost</div>
+                        <div class="oracle-value" id="totalCost">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallet -->
+            <div class="card">
+                <div class="card-header">🔗 Wallet</div>
+                <div class="card-content">
+                    <div id="walletStatus" class="status">Connecting...</div>
+                    <div id="walletInfo" class="wallet-info" style="display: none;"></div>
+                    <div class="input-group">
+                        <button class="button" id="connectBtn">Connect MetaMask</button>
+                        <button class="button" id="disconnectBtn" style="display: none;">Disconnect</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- XMBL NFTs -->
+            <div class="card">
+                <div class="card-header">🎨 XMBL NFTs</div>
+                <div class="card-content">
+                    <div class="input-group">
+                        <span id="nftCount">0 NFTs owned</span>
+                        <button class="button" id="refreshPortfolioBtn">Refresh</button>
+                    </div>
+                    <div class="nft-grid" id="nftPortfolio"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <!-- Sponsor Integrations -->
+            <div class="card">
+                <div class="card-header">🏆 Sponsor Integrations</div>
+                <div class="card-content">
+                    <div class="cross-chain-grid">
+                        <div class="cross-chain-item">
+                            <div class="cross-chain-label">Avail Nexus SDK</div>
+                            <div class="cross-chain-status" id="availStatus">🔄 Testing...</div>
+                            <div class="cross-chain-detail" id="availDetail">Cross-chain intents</div>
+                        </div>
+                        <div class="cross-chain-item">
+                            <div class="cross-chain-label">Pyth Network</div>
+                            <div class="cross-chain-status" id="pythStatus">🔄 Testing...</div>
+                            <div class="cross-chain-detail" id="pythDetail">Real-time BTC feeds</div>
+                        </div>
+                        <div class="cross-chain-item">
+                            <div class="cross-chain-label">Blockscout MCP</div>
+                            <div class="cross-chain-status" id="blockscoutStatus">🔄 Testing...</div>
+                            <div class="cross-chain-detail" id="blockscoutDetail">AI auditing</div>
+                        </div>
+                    </div>
+                    <button class="button primary" id="testCrossChainBtn">Test All Integrations</button>
+                </div>
+            </div>
+
+            <!-- Transaction Links -->
+            <div class="card">
+                <div class="card-header">🔗 Links</div>
+                <div class="card-content">
+                    <div class="links-grid" id="transactionLinks">
+                        <div class="link-item">No transactions yet...</div>
+                    </div>
+                    <button class="button" id="refreshLinksBtn">Refresh Links</button>
+                </div>
+            </div>
+
+            <!-- System Logs -->
+            <div class="card">
+                <div class="card-header">📋 System Logs</div>
+                <div class="card-content">
+                    <div class="log-container" id="logContainer">
+                        <div>System initialized...</div>
+                        <div>Loading XMBL E2E Cross-Chain Token Activation Platform...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -22,13 +22,27 @@ async function main() {
       process.exit(1);
     }
 
-    const [signer] = await ethers.getSigners();
+    const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia.publicnode.com');
+    const privateKey = process.env.PRIVATE_KEY;
+    if (!privateKey) {
+      console.error('❌ PRIVATE_KEY not found in environment variables');
+      process.exit(1);
+    }
+    const signer = new ethers.Wallet(privateKey, provider);
+    
+    if (!signer || !signer.address) {
+      console.error('❌ No signer found. Check your private key and network configuration.');
+      process.exit(1);
+    }
     console.log(`Tokenomics status with account: ${signer.address}`);
 
+    const priceOracleAddress = process.env.PRICE_ORACLE_ADDRESS || (deploymentConfig.contracts.PriceOracle ? deploymentConfig.contracts.PriceOracle.address : '0x19d9ebAe7d0883f15f64D0519D35526FFDff0891');
+    console.log(`Using PriceOracle: ${priceOracleAddress}`);
+    
     const tokenomicsService = new TokenomicsService(
       signer.provider,
       signer,
-      process.env.PRICE_ORACLE_ADDRESS || deploymentConfig.contracts.PriceOracle.address
+      priceOracleAddress
     );
 
     const tokensMinted = await tokenomicsService.getTokensMinted();

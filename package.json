@@ -55,9 +55,11 @@
     "@xchainjs/xchain-util": "^2.0.5",
     "axios": "^1.6.0",
     "bitcoinjs-lib": "^7.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.3.0",
     "ecpair": "^3.0.0",
     "ethers": "^6.8.0",
+    "express": "^5.1.0",
     "it-ws": "^6.1.5",
     "tiny-secp256k1": "^2.2.4",
     "ws": "^8.18.3"

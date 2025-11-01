@@ -1,189 +1,291 @@
 <!-- d938e078-c357-4151-b625-483afce253d0 0ac3c710-9445-49f8-8584-dcd852f012b7 -->
-# XMBL E2E Cross-Chain Token Activation Platform
+# Cross-Chain Bridge Architecture Plan
 
-## Architecture
+## Architecture Overview
 
-Multi-chain token activation system with:
-
-- **Avail Nexus SDK**: Cross-chain deposit intents with sequential processing
-- **Pyth Network**: Real-time BTC price feeds and algorithmic pricing updates
-- **Blockscout**: Transparency layer with explorer and MCP for AI monitoring
+Bridge system connecting Stacks (`/btc`) and Base (`/usdc`) contracts with:
+- Wormhole for cross-chain messaging
+- On-chain oracle contracts aggregating state from both chains
+- Master chain (Base) storing unified proof-of-faith
+- Token ID mapping registry for cross-chain token tracking
+- Synchronized pricing across both networks
 
 ## Core Components
 
-### 1. Smart Contracts (`/contracts`)
+### 1. Bridge Contracts
 
-**DepositManager.sol** (Central consolidation contract)
+#### Base Network (`/usdc/contracts/XMBLTokenBridge.sol`)
+- Wormhole integration for sending/receiving cross-chain messages
+- Lock NFT before bridging (mark as bridged, prevent transfers)
+- Emit bridge initiation event with Wormhole message
+- Receive bridge completion messages from Stacks
+- Mint corresponding NFT on Base with mapped token ID
+- Track bridge status per token ID
 
-- Receives deposits from multiple chains via Avail intents
-- Queries Pyth for BTC price feeds
-- Implements sequential activation queue with price locking
-- Emits events for cross-chain transparency
-- Manages BTC pool address routing
+**Key Functions:**
+```solidity
+function bridgeToStacks(uint256 tokenId) external;
+function receiveFromStacks(bytes memory message) external; // Called by Wormhole relayer
+function isBridged(uint256 tokenId) external view returns (bool);
+```
 
-**ChainDepositContract.sol** (Deployed per chain)
+#### Stacks Network (`/btc/contracts/xmbl-bridge.clar`)
+- Clarity contract for Stacks side bridge operations
+- Lock NFT before bridging (remove from listings, prevent transfers)
+- Emit bridge event (Wormhole integration via off-chain service)
+- Receive bridge completion messages
+- Mint corresponding NFT with mapped token ID
+- Track bridge status
 
-- Accepts user deposits (ETH, USDC, USDT, etc.)
-- Creates cross-chain intents via Avail Nexus
-- Queries Pyth for current BTC equivalent
-- Reports to central DepositManager
-- Implements "Bridge & Execute" pattern
+**Key Functions:**
+```clarity
+(define-public (bridge-to-base (token-id uint)))
+(define-public (receive-from-base (message (buff 100))))
+(define-read-only (is-bridged (token-id uint)))
+```
 
-**PriceOracle.sol**
+### 2. Token ID Mapping Registry
 
-- Integrates Pyth pull oracle (updatePriceFeeds) for BTC/USD conversion
-- Implements XMBL token economics pricing function
-- Price calculation: `cost = x + (x * Math.sqrt(5)) / (2 * y))` where x=Token Price, y=Tokens Minted, Phi=Golden Ratio (1.618...)
-- Starting value: 1 satoshi (0.00000001 BTC)
-- Price increases on activation, decreases on deactivation
-- **All prices round UP to nearest satoshi**
-- Provides sequential price locking per activation (locks price on intent creation)
-- Implements settlement verification with automatic revert if settlement fails
-- Low-latency settlement verification
-- 3% network fee calculation on all transactions
+#### Base Network (`/usdc/contracts/XMBLTokenRegistry.sol`)
+- Maps Stacks token IDs to Base token IDs and vice versa
+- Stores bidirectional mappings: `stacksTokenId <-> baseTokenId`
+- Tracks origin chain for each token
+- Prevents duplicate bridging
+- Only bridge contract can update mappings
 
-### 2. Backend Services (`/services`)
+**Storage:**
+```solidity
+mapping(uint256 => uint256) public stacksToBase; // stacksId => baseId
+mapping(uint256 => uint256) public baseToStacks; // baseId => stacksId
+mapping(uint256 => bool) public tokenOrigin; // true = Stacks origin, false = Base origin
+```
 
-**NexusIntentService.ts**
+### 3. Cross-Chain Oracle Contracts
 
-- Initializes Avail Nexus SDK using `@avail-project/nexus-core` (headless SDK)
-- Sets up intent hooks (setOnIntentHook) for approval/denial
-- Sets up allowance hooks (setOnAllowanceHook) for token permissions
-- Manages cross-chain intent queue with sequential processing
-- Subscribes to nexusEvents (EXPECTED_STEPS, STEP_COMPLETE, etc.)
-- Handles Bridge & Execute pattern for prize qualification
-- Implements retry logic and error handling
+#### Base Network Oracle (`/usdc/contracts/XMBLOracleBase.sol`)
+- Aggregates state from both Stacks and Base contracts
+- Reads from Stacks via Chainlink Oracle (or similar Stacks → EVM oracle)
+- Stores aggregated totals: `totalTokensMinted`, `aggregatedProofOfFaith`
+- Calculates unified `currentPrice` based on total tokens across both chains
+- Updates both contracts when state changes
+- Only oracle can call sync functions on contracts
 
-**PythOracleService.ts**
+**State Aggregation:**
+```solidity
+struct AggregatedState {
+    uint256 totalTokensStacks;      // From Stacks contract
+    uint256 totalTokensBase;        // From Base contract
+    uint256 totalTokensMinted;      // Sum of both
+    uint256 proofOfFaithStacks;     // From Stacks (in satoshis)
+    uint256 proofOfFaithBase;       // From Base (in WBTC satoshis)
+    uint256 aggregatedProofOfFaith; // Unified total (normalized)
+    uint256 currentPrice;           // Calculated from totalTokensMinted
+}
+```
 
-- Integrates `@pythnetwork/pyth-evm-js` SDK
-- Fetches real-time prices from Hermes API
-- Implements updatePriceFeeds contract method
-- Manages price feed subscriptions (BTC/USD feed ID)
-- Implements caching layer for rate limiting
-- Handles Pyth EVM error codes
+**Key Functions:**
+```solidity
+function updateStacksState(uint256 tokensMinted, uint256 proofOfFaith) external;
+function updateBaseState(uint256 tokensMinted, uint256 proofOfFaith) external;
+function syncPriceToStacks(uint256 newPrice) external; // Via Wormhole message
+function syncPriceToBase(uint256 newPrice) external;
+function getAggregatedState() external view returns (AggregatedState memory);
+```
 
-**BlockscoutMonitorService.ts**
+#### Stacks Oracle Contract (`/btc/contracts/xmbl-oracle.clar`)
+- Receives state updates from Base via Wormhole
+- Stores Base contract state: `base-tokens-minted`, `base-proof-of-faith`
+- Receives price sync updates from Base oracle
+- Updates local contract state when synced
 
-- Indexes events from Avail intents
-- Tracks deposit/activation transactions
-- Pushes data to Autoscout instance
-- Interfaces with Blockscout REST/RPC APIs
+**Key Functions:**
+```clarity
+(define-public (update-base-state (tokens-minted uint) (proof-of-faith uint)))
+(define-public (sync-price (new-price uint)))
+(define-read-only (get-aggregated-state))
+```
 
-**BlockscoutMCPService.ts**
+### 4. Contract Modifications
 
-- Integrates with Blockscout MCP server (ghcr.io/blockscout/mcp-server)
-- Provides tools: get_chains_list, get_address_info, get_token_holdings
-- Implements custom MCP prompt for activation auditing (prompt prize)
-- Exposes MCP tools for AI analysis
+#### Modify `/usdc/contracts/XMBLTokenBase.sol`
+- Add `bridgeContract` address (only bridge can call bridge functions)
+- Add `oracleContract` address (only oracle can sync price/proof-of-faith)
+- Add `bridgedTokens` mapping to track which tokens are bridged
+- Add `bridgeToStacks()` function (locks NFT, emits event)
+- Add `receiveFromStacks()` function (mints NFT with mapped ID)
+- Modify `mintNew()` to call oracle for state sync after mint
+- Modify `proofOfFaith` to sync from master oracle
+- Modify `currentPrice` to sync from oracle
 
-**MCPApplication.ts**
+**New State Variables:**
+```solidity
+address public bridgeContract;
+address public oracleContract;
+mapping(uint256 => bool) public bridgedTokens;
+mapping(uint256 => uint256) public crossChainTokenId; // baseId => stacksId
+```
 
-- Full application using Blockscout MCP server (app prize)
-- Provides conversational blockchain analytics
-- Analyzes activation sequences for anomalies
-- AI-powered activation auditor interface
+**Modified Functions:**
+```solidity
+function mintNew(...) external {
+    // ... existing mint logic ...
+    oracleContract.updateBaseState(tokensMinted, proofOfFaith);
+    oracleContract.syncPriceToStacks(currentPrice); // Via Wormhole
+}
 
-**BTCConversionService.ts**
+function syncPriceFromOracle(uint256 newPrice) external onlyOracle {
+    currentPrice = newPrice;
+}
 
-- Integrates THORChain testnet bridge
-- Handles asset-to-BTC swaps on testnet
-- Routes funds to BTC pool address
-- Tracks conversion confirmations
+function syncProofOfFaithFromOracle(uint256 newProofOfFaith) external onlyOracle {
+    proofOfFaith = newProofOfFaith;
+}
+```
 
-### 3. CLI Scripts (`/scripts`)
+#### Modify `/btc/contracts/xmbl-token.clar`
+- Add `bridge-contract` principal (only bridge can call bridge functions)
+- Add `oracle-contract` principal (only oracle can sync)
+- Add `bridged-tokens` map
+- Add `cross-chain-token-id` map (stacks-id => base-id)
+- Add bridge functions
+- Modify `mint-new` to notify oracle after mint
+- Modify price and proof-of-faith to sync from oracle
 
-**deploy.ts** - Deploy contracts to multiple chains
-**activate.ts** - Process manual token activation
-**monitor.ts** - Real-time monitoring of cross-chain flows
-**fetch-prices.ts** - Query current Pyth prices
-**verify-sequence.ts** - Audit activation sequencing
-**export-records.ts** - Export transparent records
-**setup-autoscout.ts** - Deploy Blockscout explorer
-**test-flow.ts** - End-to-end testnet flow
+**New Data Variables:**
+```clarity
+(define-data-var bridge-contract (optional principal) none)
+(define-data-var oracle-contract (optional principal) none)
+(define-map bridged-tokens { id: uint } bool)
+(define-map cross-chain-token-id { stacks-id: uint } uint) ;; Maps to base token ID
+```
 
-### 4. Configuration (`/config`)
+### 5. Master Chain Synchronization (Base)
 
-**chains.json** - Supported chains with RPC endpoints
-**contracts.json** - Deployed contract addresses
-**pyth.json** - Price feed IDs and Hermes endpoints
-**avail.json** - Nexus SDK configuration
-**blockscout.json** - Explorer and MCP settings
+**Proof-of-Faith Master Storage:**
+- Base oracle contract stores unified `aggregatedProofOfFaith`
+- Both contracts sync from oracle
+- When minting on Base: update oracle → oracle syncs to Stacks
+- When minting on Stacks: update oracle → oracle updates Base contract
+- Normalize units: Stacks uses satoshis, Base uses WBTC satoshis (both 1e8 scale)
 
-### 5. Documentation
+**Price Synchronization:**
+- Oracle calculates unified price: `calculatePrice(previousPrice, totalTokensMintedAcrossChains)`
+- Syncs calculated price to both contracts
+- Ensures both chains show same price regardless of where tokens exist
 
-**AVAIL_FEEDBACK.md** - Developer feedback for $500 bonus
-**INTEGRATION.md** - Technical integration guide
-**API.md** - Service API documentation
-**DEMO.md** - Demo video script and flow
+### 6. Wormhole Integration Service
+
+#### Off-Chain Service (`/bridge/services/WormholeBridgeService.ts`)
+- Monitors bridge events on both chains
+- Submits Wormhole messages when bridging initiated
+- Receives Wormhole messages and validates
+- Calls receive functions on destination chains
+- Handles Wormhole message encoding/decoding
+
+**Key Functions:**
+```typescript
+async bridgeToStacks(baseTokenId: number): Promise<string>
+async bridgeToBase(stacksTokenId: number): Promise<string>
+async monitorWormholeMessages(): Promise<void>
+async validateAndDeliverMessage(message: WormholeMessage): Promise<void>
+```
+
+### 7. Bridge Scripts
+
+#### `/bridge/scripts/bridge-to-stacks.ts`
+- User initiates bridge from Base
+- Locks NFT on Base
+- Submits Wormhole message
+- Monitors for completion on Stacks
+
+#### `/bridge/scripts/bridge-to-base.ts`
+- User initiates bridge from Stacks
+- Locks NFT on Stacks
+- Submits Wormhole message (via service)
+- Monitors for completion on Base
 
 ## Implementation Details
 
-### Sequential Activation Flow
+### Token ID Mapping Logic
 
-1. User deposits on any chain → ChainDepositContract
-2. Contract queries Pyth for BTC price
-3. Creates Avail intent for cross-chain routing
-4. Intent queues in sequential order (on-chain confirmation required)
-5. Central DepositManager processes when prior activation settles
-6. Algorithmic price increment applied
-7. BTC conversion executed
-8. All events indexed by Blockscout
+When bridging:
+1. User calls `bridgeToStacks(tokenId)` on Base
+2. Base contract locks token, emits event with tokenId
+3. Bridge service creates Wormhole message with:
+   - Source token ID (Base)
+   - Target chain (Stacks)
+   - Owner address
+   - Token price (for state sync)
+4. On Stacks, bridge contract mints new NFT with:
+   - New token ID (next available on Stacks)
+   - Mapped to original Base token ID
+5. Registry stores bidirectional mapping
 
-### Prize Alignment
+### Price Calculation Sync
 
-- **Avail DeFi/Payments** ($5k): Sequential intents + Bridge & Execute
-- **Avail Unchained Apps** ($4.5k): Unified activation router concept
-- **Avail Feedback** ($500): AVAIL_FEEDBACK.md with detailed testing
-- **Pyth Innovative Use** ($3k): Algorithmic pricing + PR to pyth-examples
-- **Blockscout Autoscout** ($3.5k): Custom explorer deployment
-- **Blockscout SDK** ($3k): Real-time transaction embedding
-- **Blockscout MCP** ($3.5k): AI activation auditing prompts
+Formula: `cost = cost + Math.ceil((cost * Math.sqrt(5)) / (2 * x))`
 
-**Total Target**: $23,000
+Where `x = totalTokensMintedAcrossBothChains`
 
-## Tech Stack
+Oracle:
+1. Reads `tokensMinted` from Stacks contract (via oracle)
+2. Reads `tokensMinted` from Base contract
+3. Sums them: `totalTokens = stacksTokens + baseTokens`
+4. Calculates unified price using total
+5. Syncs price to both contracts
 
-- **Solidity 0.8.x**: Smart contracts
-- **Hardhat**: Development framework
-- **TypeScript/Node.js**: Backend services
-- **Avail Nexus SDK**: Cross-chain intents
-- **Pyth Network SDK**: Oracle integration
-- **Blockscout SDK + MCP**: Monitoring layer
-- **Ethers.js v6**: Blockchain interaction
+### Proof-of-Faith Aggregation
 
-## Testnet Chains
+- Stacks: stores in satoshis (1e8 scale)
+- Base: stores in WBTC satoshis (1e8 scale)
+- Oracle normalizes both to same scale
+- Aggregates: `total = stacksProofOfFaith + baseProofOfFaith`
+- Syncs aggregated total back to both contracts
+- Pool split uses aggregated total for calculations
 
-Ethereum Sepolia, Polygon Mumbai, BSC Testnet, Arbitrum Sepolia, Optimism Sepolia
+## Files to Create/Modify
 
-## Git Workflow - MANDATORY
+### New Files:
+1. `/usdc/contracts/XMBLTokenBridge.sol` - Base bridge contract
+2. `/usdc/contracts/XMBLTokenRegistry.sol` - Token ID mapping registry
+3. `/usdc/contracts/XMBLOracleBase.sol` - Base oracle contract
+4. `/btc/contracts/xmbl-bridge.clar` - Stacks bridge contract
+5. `/btc/contracts/xmbl-oracle.clar` - Stacks oracle contract
+6. `/bridge/services/WormholeBridgeService.ts` - Bridge service
+7. `/bridge/scripts/bridge-to-stacks.ts` - Bridge script
+8. `/bridge/scripts/bridge-to-base.ts` - Bridge script
+9. `/bridge/config/wormhole.json` - Wormhole configuration
 
-**COMMIT AFTER EVERY SMALL CHANGE**
+### Modify Existing:
+1. `/usdc/contracts/XMBLTokenBase.sol` - Add bridge/oracle integration
+2. `/btc/contracts/xmbl-token.clar` - Add bridge/oracle integration
 
-Every single change must be:
-1. **Tested** - Unit tests + integration tests
-2. **Security verified** - No vulnerabilities introduced
-3. **Committed to GitHub** - Small atomic commits only
-4. **Verified cohesive** - Works with entire system
+## Security Considerations
 
-**NO GIANT CODE DUMPS - Commit after each component is added and tested**
+- Bridge contracts verify Wormhole messages before minting
+- Oracle contracts verify source before updating state
+- Tokens locked during bridge (cannot transfer or list)
+- Registry prevents duplicate mappings
+- Price sync requires oracle signature/authorization
+- Proof-of-faith sync validates source chain data
 
-Commit message format:
-```
-[Component] Brief description
+## Testing Strategy
 
-- What was changed
-- Tests added
-- Security checks: passed
-- Integration: verified
-```
+- Unit tests for bridge functions
+- Integration tests for cross-chain messaging
+- Oracle aggregation tests
+- State synchronization tests
+- Token ID mapping verification
+- Edge cases: bridge failure, double-bridge attempts
 
-Every commit requires:
-- All existing tests pass
-- New tests for new code
-- Security audit (reentrancy, access control, overflows)
-- Build succeeds
-- System remains cohesive
+## Deployment Order
+
+1. Deploy registry contract on Base
+2. Deploy oracle contracts on both chains
+3. Deploy bridge contracts on both chains
+4. Update existing token contracts with bridge/oracle addresses
+5. Initialize bridge service (off-chain)
+6. Test bridge flow end-to-end
 
 ### To-dos
 

@@ -1,0 +1,29 @@
+{
+  "mainnet": {
+    "base": {
+      "chainId": 8453,
+      "wormholeCore": "0x98f3c9e6E3fAce36bAad05FE09d375Ef1464288B",
+      "rpcUrl": "https://mainnet.base.org"
+    },
+    "stacks": {
+      "chainId": 1,
+      "rpcUrl": "https://api.mainnet.hiro.so"
+    }
+  },
+  "testnet": {
+    "base": {
+      "chainId": 84532,
+      "wormholeCore": "0x4a8bc9edFBD3C6C09349b2Bb5B96E26E6bF9E69E",
+      "rpcUrl": "https://sepolia.base.org"
+    },
+    "stacks": {
+      "chainId": 2147483648,
+      "rpcUrl": "https://api.testnet.hiro.so"
+    }
+  },
+  "wormhole": {
+    "rpcUrl": "https://wormhole-v2-mainnet-api.certus.one/v1/signed_vaa",
+    "apiUrl": "https://wormhole-v2-mainnet-api.certus.one"
+  }
+}
+

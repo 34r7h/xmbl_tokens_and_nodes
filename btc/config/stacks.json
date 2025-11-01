@@ -1,0 +1,34 @@
+{
+  "testnet": {
+    "network": "testnet",
+    "rpcUrl": "https://api.testnet.hiro.so",
+    "explorerUrl": "https://explorer.stacks.co/?chain=testnet",
+    "contractAddress": "",
+    "proxyAddress": "",
+    "developmentPool": "",
+    "liquidityPool": "",
+    "privateKey": ""
+  },
+  "mainnet": {
+    "network": "mainnet",
+    "rpcUrl": "https://api.hiro.so",
+    "explorerUrl": "https://explorer.stacks.co",
+    "contractAddress": "",
+    "proxyAddress": "",
+    "developmentPool": "",
+    "liquidityPool": "",
+    "privateKey": ""
+  },
+  "gasPrices": {
+    "deployment": "~50,000 STX gas units",
+    "mint": "~15,000 STX gas units",
+    "upgrade": "~20,000 STX gas units",
+    "costPerGasUnit": "~0.00001 STX"
+  },
+  "notes": {
+    "STXConversion": "1 STX = 1,000,000 microstacks",
+    "BTCConversion": "1 BTC = 100,000,000 satoshis",
+    "simplifiedRate": "For calculations, treating 1 microstack ≈ 1 satoshi"
+  }
+}
+

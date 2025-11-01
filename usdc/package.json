@@ -1,0 +1,37 @@
+{
+  "name": "xmbl-token-base",
+  "version": "1.0.0",
+  "description": "XMBL Token on Base network with USDC/WBTC pricing",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:base": "ts-node scripts/deploy.ts base",
+    "deploy:base-sepolia": "ts-node scripts/deploy.ts baseSepolia",
+    "buy": "ts-node scripts/buy.ts",
+    "mint": "ts-node scripts/mint.ts",
+    "list": "ts-node scripts/list.ts"
+  },
+  "keywords": [
+    "base",
+    "ethereum",
+    "solidity",
+    "nft",
+    "usdc",
+    "wbtc"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "ethers": "^6.9.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "hardhat": "^2.19.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.2"
+  }
+}
+

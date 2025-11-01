@@ -1,0 +1,19 @@
+{
+  "mainnet": {
+    "name": "Base Mainnet",
+    "chainId": 8453,
+    "rpcUrl": "https://mainnet.base.org",
+    "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "wbtc": "0x1ce4a2C355F0DcC24E32A9Af19F1836D6F6f98f",
+    "explorer": "https://basescan.org"
+  },
+  "sepolia": {
+    "name": "Base Sepolia Testnet",
+    "chainId": 84532,
+    "rpcUrl": "https://sepolia.base.org",
+    "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    "wbtc": "0x29f2D40B060520436445af02b00b2A10e047eE81",
+    "explorer": "https://sepolia.basescan.org"
+  }
+}
+
